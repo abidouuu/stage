@@ -470,7 +470,7 @@ def plot_fig4(t, B, b, kappa_data, epsilon_data, inter_kappa, inter_epsilon, fol
     save_fig(fig_4_B_b, folder, "Fig_4_B_b")
     save_fig(fig_4_stat, folder, "Fig_4_stat")
 
-def skumanich_v2(folder, cfg :config, data_avg):
+def skumanich_100(folder, cfg :config, data_avg):
     epsilons=data_avg[:,4][::100]
     ts=data_avg[:,0][::100]
     kappas=data_avg[:,3][::100]
@@ -498,11 +498,33 @@ def skumanich_v2(folder, cfg :config, data_avg):
 
     return data_new, stddev_new
 
+def skumanich_analytique(folder, cfg :config, data_avg):
+    epsilons=data_avg[:,4][::100]
+    ts=data_avg[:,0][::100]
+    kappas=data_avg[:,3][::100]
+    Omegas=data_avg[:,5][::100]
+    B_eqs=[]
+    b_eqs=[]
+    for epsiloneq in epsilons : 
+        cfg_new= config(datadir=folder, term='mid',
+                    epsiloneq=epsiloneq, Lambda=cfg.Lambda, kappaeq=cfg.kappaeq, run_index=1,
+                    inter_kappa=True, inter_epsilon=True,
+                    taukappa=cfg.taukappa, deltaepsilon=cfg.deltaepsilon, deltakappa=cfg.deltakappa,
+                    tfin=10)
+        B_eq,b_eq = cfg_new.get_eq()[0]
+        B_eqs.append(B_eq)
+        b_eq.append(b_eq)
+    data_new = np.column_stack((ts, B_eqs, b_eqs, kappas, epsilons, Omegas))
+
+    os.makedirs(folder, exist_ok=True)
+    np.savetxt(os.path.join(folder, "output.txt"), data_new)
+    return data_new
+
 
 def plot_B_omega(data, folder, name="Fig_B_omega", stddevs=None):
     """Trace B en fonction d'Omega (au lieu de B(t)).
-    Fonctionne aussi bien avec les données skumanich_v1 (t,B,b,kappa,epsilon,Omega,
-    6 colonnes) qu'avec celles de skumanich_v2 (même ordre de colonnes)."""
+    Fonctionne aussi bien avec les données skumanich_mean (t,B,b,kappa,epsilon,Omega,
+    6 colonnes) qu'avec celles de skumanich_100 (même ordre de colonnes)."""
     Omega = data[:, 5]
     B = data[:, 1]
 
@@ -595,25 +617,30 @@ def big_simus():
                     cfg.write_config_file()
 
                 if inter_kappa and (not inter_epsilon):
-                    skumanich_v1_folder = os.path.join(epsiloneq_folder, "skumanich_v1")
-                    skumanich_v2_folder = os.path.join(epsiloneq_folder, "skumanich_v2")
+                    skumanich_mean_folder = os.path.join(epsiloneq_folder, "skumanich_mean")
+                    skumanich_100_folder = os.path.join(epsiloneq_folder, "skumanich_100")
+                    skumanich_analytique_folder = os.path.join(epsiloneq_folder, "skumanich_analytique")
+
                     for kappaeq in tqdm(kappaeqs, desc="skumanich", position=2, leave=False):
-                        kappaeq_v1_folder = os.path.join(skumanich_v1_folder, "kappaeq=" + str(kappaeq))
-                        kappaeq_v2_folder = os.path.join(skumanich_v2_folder, "kappaeq=" + str(kappaeq))
+                        kappaeq_mean_folder = os.path.join(skumanich_mean_folder, "kappaeq=" + str(kappaeq))
+                        kappaeq_100_folder = os.path.join(skumanich_100_folder, "kappaeq=" + str(kappaeq))
+                        kappaeq_analytique_folder = os.path.join(skumanich_analytique_folder, "kappaeq="+ str(kappaeq))
                         try:
-                            cfg = config(datadir=kappaeq_v1_folder, term='long',
+                            cfg = config(datadir=kappaeq_mean_folder, term='long',
                                          epsiloneq=epsiloneq, Lambda=Lambda, kappaeq=kappaeq, run_index=1,
                                          inter_kappa=inter_kappa, inter_epsilon=inter_epsilon)
                             (B_eq, b_eq) = cfg.get_eq(skuma=True)[0]
                             cfg.B0 = B_eq
                             cfg.b0 = b_eq
                             _, data_avg, stddevs = cfg.run_and_avg(save_all=True, save_figs=True)
-                            data_v2, std_v2 = skumanich_v2(folder=kappaeq_v2_folder, cfg=cfg, data_avg=data_avg)
+                            data_100, std_100 = skumanich_100(folder=kappaeq_100_folder, cfg=cfg, data_avg=data_avg)
                             for type in ['Bb', 'kappa', 'epsilon', 'Omega']:
                                 cfg.plot_time(data_avg, type=type, show=False, stddevs=stddevs)
-                                cfg.plot_time(data_v2, type=type, show=False, stddevs=std_v2, differentfolder=kappaeq_v2_folder)
-                            plot_B_omega(data_avg, kappaeq_v1_folder, stddevs=stddevs)
-                            plot_B_omega(data_v2, kappaeq_v2_folder, stddevs=std_v2)
+                                cfg.plot_time(data_100, type=type, show=False, stddevs=std_100, differentfolder=kappaeq_100_folder)
+                            data_analytique=skumanich_analytique(folder=kappaeq_analytique_folder,cfg=cfg, data_avg=data_avg)
+                            cfg.plot_time(data=data_analytique, type="Bb", show=False, differentfolder=kappaeq_analytique_folder)
+                            plot_B_omega(data_avg, kappaeq_mean_folder, stddevs=stddevs)
+                            plot_B_omega(data_100, kappaeq_100_folder, stddevs=std_100)
                         except Exception as e:
                             # Une simulation qui plante (subprocess C++, donnees
                             # incoherentes, etc.) ne doit pas interrompre les
