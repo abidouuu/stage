@@ -649,4 +649,4 @@ def big_simus():
 
 if __name__ == "__main__":
     court_terme()
-    #big_simus()
+    big_simus()
