@@ -76,7 +76,7 @@ class config:
             if tfin is None : 
                 if term=='short' : tfin=400
                 elif term=='mid' : tfin=2e5
-                elif term=='long' : tfin=5e5
+                elif term=='long' : tfin=4e5
                 else:tfin=40
 
             if run_index is not None:

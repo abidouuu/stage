@@ -312,9 +312,9 @@ def court_terme(show_lambda=True):
 # -------------- FIGURES 3,4,5,6 : Moyen terme, intermittence ---------------------------------------------
 # ==========================================================================================================
 datadir_mid = os.path.join(datadir, "2_Moyen_terme_Intermittence")
-Lambdas = [0.01,0.1]
+Lambdas = [0.01]
 epsiloneqs = [-0.1, 0, 0.1]
-kappaeqs = [0, 0.1, 1]
+kappaeqs = [0.1, 1]
 inter_list = [(True, False), (False, True), (True, True)]  # kappa, epsilon
 
 
@@ -484,7 +484,7 @@ def skumanich_100(folder, cfg :config, data_avg):
                     epsiloneq=epsiloneq, Lambda=cfg.Lambda, kappaeq=cfg.kappaeq, run_index=1,
                     inter_kappa=True, inter_epsilon=True,
                     taukappa=cfg.taukappa, deltaepsilon=cfg.deltaepsilon, deltakappa=cfg.deltakappa,
-                    tfin=10000)
+                    tfin=cfg.tfin/10)
         data=cfg_new.run(save=False)
         B_means.append(np.mean(data[:,1]))
         B_stddevs.append(np.std(data[:,1]))
@@ -520,7 +520,6 @@ def skumanich_analytique(folder, cfg :config, data_avg):
     np.savetxt(os.path.join(folder, "output.txt"), data_new)
     return data_new
 
-
 def plot_B_omega(data, folder, name="Fig_B_omega", stddevs=None):
     """Trace B en fonction d'Omega (au lieu de B(t)).
     Fonctionne aussi bien avec les données skumanich_mean (t,B,b,kappa,epsilon,Omega,
@@ -548,7 +547,7 @@ def plot_B_omega(data, folder, name="Fig_B_omega", stddevs=None):
             Omega_sorted,
             B_sorted - B_stddev,
             B_sorted + B_stddev,
-            color=PLOT_STYLE["color_B"],
+            color=_OKABE_ITO["sky_blue"],
             alpha=0.25
         )
 
@@ -635,17 +634,14 @@ def big_simus():
                             _, data_avg, stddevs = cfg.run_and_avg(save_all=True, save_figs=True)
                             data_100, std_100 = skumanich_100(folder=kappaeq_100_folder, cfg=cfg, data_avg=data_avg)
                             for type in ['Bb', 'kappa', 'epsilon', 'Omega']:
-                                cfg.plot_time(data_avg, type=type, show=False, stddevs=stddevs)
+                                cfg.plot_time(data_avg, type=type, show=False, stddevs=stddevs, differentfolder=kappaeq_mean_folder)
                                 cfg.plot_time(data_100, type=type, show=False, stddevs=std_100, differentfolder=kappaeq_100_folder)
                             data_analytique=skumanich_analytique(folder=kappaeq_analytique_folder,cfg=cfg, data_avg=data_avg)
                             cfg.plot_time(data=data_analytique, type="Bb", show=False, differentfolder=kappaeq_analytique_folder)
                             plot_B_omega(data_avg, kappaeq_mean_folder, stddevs=stddevs)
                             plot_B_omega(data_100, kappaeq_100_folder, stddevs=std_100)
+                            plot_B_omega(data_analytique, kappaeq_analytique_folder)
                         except Exception as e:
-                            # Une simulation qui plante (subprocess C++, donnees
-                            # incoherentes, etc.) ne doit pas interrompre les
-                            # kappaeq restants ni les combinaisons Lambda/epsiloneq
-                            # suivantes : on logge et on continue.
                             tqdm.write(f"[skumanich] echec pour Lambda={Lambda}, epsiloneq={epsiloneq}, "
                                        f"kappaeq={kappaeq} : {e}")
                             continue
@@ -680,5 +676,5 @@ def big_simus():
     tqdm.write("Simulations d'intermittence : fin")
 
 if __name__ == "__main__":
-    #court_terme()
+    court_terme()
     big_simus()
