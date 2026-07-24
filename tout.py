@@ -535,6 +535,9 @@ def plot_B_omega(data, folder, name="Fig_B_omega", stddevs=None):
     fig.tight_layout()
     save_fig(fig, folder, name)
 
+def get_freq(minimas, tfin):
+    [(_,durees)]=minimas
+    return sum(durees)/tfin
 
 def big_simus():
     tqdm.write("Simulations d'intermittence : début")
@@ -570,8 +573,9 @@ def big_simus():
                             minimas = cfg.stat_analysis(data)
                             cfg.write_stat_file(minimas=minimas)
                             minimas_total.extend(minimas)
+                        freq=get_freq(minimas, cfg.tfin)
                         cfg.plot_histograms(minimas_list=minimas_total, differentfolder=minimas_folder,
-                                             name="kappaeq=" + str(kappaeq) + ".png")
+                                             name="kappaeq=" + str(kappaeq) + ".png", freq=freq)
                         cfg.plot_time(data=data_avg, type='epsilon', differentfolder=folder_fig_3, name="stat_kappa="+str(kappaeq))
                         t = data_avg[:, 0]
                         B = data_avg[:, 1]
@@ -644,9 +648,10 @@ def big_simus():
                             plot_fft(t, kappa_data, r"$\kappa(t)$", cfg.folder, "kappa")
                             plot_fig5(epsilon_data, kappa_data, B, cfg.folder)
                             plot_fig4(t, B, b, kappa_data, epsilon_data, inter_kappa, inter_epsilon, cfg.folder)
-                        cfg.plot_histograms(minimas_list=minimas_list, differentfolder=kappaeq_folder)
+                        freq=get_freq(minimas=minimas_list)
+                        cfg.plot_histograms(minimas_list=minimas_list, differentfolder=kappaeq_folder, freq=freq)
     tqdm.write("Simulations d'intermittence : fin")
 
 if __name__ == "__main__":
-    court_terme()
+    #court_terme()
     big_simus()

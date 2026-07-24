@@ -646,7 +646,7 @@ class config:
         return minimas
     
     def plot_histograms(self, minimas_list, differentfolder=None, show=False, name=None,
-                         labels=None, xlabel="Duration", density=False):
+                         labels=None, xlabel="Duration", density=False, freq=None):
         
         if len(minimas_list) > 0 and isinstance(minimas_list[0], tuple):
             minimas_list = [minimas_list]
@@ -698,6 +698,13 @@ class config:
         handles, hlabels = ax.get_legend_handles_labels()
         if handles:
             ax.legend(fontsize=PLOT_STYLE["legend_fontsize"], frameon=False)
+
+        if freq is not None : 
+            ax.text(0.8, 0.8, "$f=="+str(freq),
+                    transform=ax.transAxes,
+                    fontsize=20,
+                    color=_OKABE_ITO["vermillion"],
+                    va="center", ha="center")
 
         fig.tight_layout()
 
