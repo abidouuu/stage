@@ -731,10 +731,10 @@ def big_simus():
                             plot_fft(t, kappa_data, r"$\kappa(t)$", cfg.folder, "kappa")
                             plot_fig5(epsilon_data, kappa_data, B, cfg.folder)
                             plot_fig4(t, B, b, kappa_data, epsilon_data, inter_kappa, inter_epsilon, cfg.folder)
-                        freq=get_freq(minimas=minimas_list)
+                        freq=get_freq(minimas=minimas_list,tfin=cfg.tfin)
                         cfg.plot_histograms(minimas_list=minimas_list, differentfolder=kappaeq_folder, freq=freq)
     tqdm.write("Simulations d'intermittence : fin")
 
 if __name__ == "__main__":
-    court_terme()
+    #court_terme()
     big_simus()
