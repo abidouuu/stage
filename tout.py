@@ -471,10 +471,10 @@ def plot_fig4(t, B, b, kappa_data, epsilon_data, inter_kappa, inter_epsilon, fol
     save_fig(fig_4_stat, folder, "Fig_4_stat")
 
 def skumanich_100(folder, cfg :config, data_avg):
-    epsilons=data_avg[:,4][::100]
-    ts=data_avg[:,0][::100]
-    kappas=data_avg[:,3][::100]
-    Omegas=data_avg[:,5][::100]
+    epsilons=data_avg[:,4][::10000]
+    ts=data_avg[:,0][::10000]
+    kappas=data_avg[:,3][::10000]
+    Omegas=data_avg[:,5][::10000]
     B_means=[]
     B_stddevs=[]
     b_means=[]
@@ -499,10 +499,10 @@ def skumanich_100(folder, cfg :config, data_avg):
     return data_new, stddev_new
 
 def skumanich_analytique(folder, cfg :config, data_avg):
-    epsilons=data_avg[:,4][::100]
-    ts=data_avg[:,0][::100]
-    kappas=data_avg[:,3][::100]
-    Omegas=data_avg[:,5][::100]
+    epsilons=data_avg[:,4][::10000]
+    ts=data_avg[:,0][::10000]
+    kappas=data_avg[:,3][::10000]
+    Omegas=data_avg[:,5][::10000]
     B_eqs=[]
     b_eqs=[]
     for epsiloneq in epsilons : 
