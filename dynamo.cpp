@@ -85,12 +85,12 @@ void dynamo::printout(bool force){
     if (force){
         if (outputfile->is_open()) {
             if (term=="short"){
-                *outputfile << t << " " << B << " " << b << endl;
+                *outputfile << t << " " << B << " " << b << "\n";
             } else if (term=="mid"){
                 *outputfile << t << " " << B << " " << b << " " << kappa 
-                << " " << epsilon << endl;
+                << " " << epsilon << "\n";
             } else{*outputfile << t << " " << B << " " << b << " " << kappa 
-                << " " << epsilon << " " << Omega << endl;
+                << " " << epsilon << " " << Omega << "\n";
 
             }
         }
