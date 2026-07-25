@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import json
 from simu import config
 from tqdm import tqdm
 from math import sqrt
@@ -115,6 +116,7 @@ def fmt_num(x):
     scientifique (1e-2), tout en évitant les zéros parasites."""
     s = f"{x:g}"
     return s
+
 def find_empty_spot(ax, grid_size=25, margin=0.08, max_points_per_line=200, avoid_legend=True):
     """Cherche, dans les coordonnées d'axes (0-1), la position la plus
     éloignée de toutes les courbes déjà tracées sur `ax` (et, par
@@ -470,11 +472,61 @@ def plot_fig4(t, B, b, kappa_data, epsilon_data, inter_kappa, inter_epsilon, fol
     save_fig(fig_4_B_b, folder, "Fig_4_B_b")
     save_fig(fig_4_stat, folder, "Fig_4_stat")
 
+def _skumanich_cache_meta(kind, cfg: config, data_avg, stride):
+    """Fingerprint of everything that changes the result of a skumanich_100 /
+    skumanich_analytique call. If any of this differs from what's stored on
+    disk, the cache is considered stale and the computation is redone."""
+    return {
+        "kind": kind,
+        "Lambda": cfg.Lambda,
+        "epsiloneq": cfg.epsiloneq,
+        "kappaeq": cfg.kappaeq,
+        "tfin": cfg.tfin,
+        "taukappa": cfg.taukappa,
+        "deltaepsilon": cfg.deltaepsilon,
+        "deltakappa": cfg.deltakappa,
+        "stride": stride,
+        "n_points": int(data_avg.shape[0]),
+    }
+
+def _load_skumanich_cache(folder, filenames, meta):
+    """Return the cached arrays (in the order of `filenames`) if a matching,
+    complete cache is found in `folder`; otherwise None."""
+    meta_path = os.path.join(folder, "cache_meta.json")
+    if not os.path.exists(meta_path):
+        return None
+    if not all(os.path.exists(os.path.join(folder, f)) for f in filenames):
+        return None
+    try:
+        with open(meta_path, "r", encoding="utf-8") as f:
+            cached_meta = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return None
+    if cached_meta != meta:
+        return None
+    try:
+        return [np.genfromtxt(os.path.join(folder, f)) for f in filenames]
+    except OSError:
+        return None
+
+def _save_skumanich_cache(folder, arrays, meta):
+    os.makedirs(folder, exist_ok=True)
+    for name, arr in arrays.items():
+        np.savetxt(os.path.join(folder, name), arr)
+    with open(os.path.join(folder, "cache_meta.json"), "w", encoding="utf-8") as f:
+        json.dump(meta, f)
+
 def skumanich_100(folder, cfg :config, data_avg):
-    epsilons=data_avg[:,4][::400000]
-    ts=data_avg[:,0][::400000]
-    kappas=data_avg[:,3][::400000]
-    Omegas=data_avg[:,5][::400000]
+    stride = 400000
+    meta = _skumanich_cache_meta("skumanich_100", cfg, data_avg, stride)
+    cached = _load_skumanich_cache(folder, ["output.txt", "stddev.txt"], meta)
+    if cached is not None:
+        return cached[0], cached[1]
+
+    epsilons=data_avg[:,4][::stride]
+    ts=data_avg[:,0][::stride]
+    kappas=data_avg[:,3][::stride]
+    Omegas=data_avg[:,5][::stride]
     B_means=[]
     B_stddevs=[]
     b_means=[]
@@ -493,16 +545,21 @@ def skumanich_100(folder, cfg :config, data_avg):
     data_new = np.column_stack((ts, B_means, b_means, kappas, epsilons, Omegas))
     stddev_new = np.column_stack((np.zeros_like(ts), B_stddevs, b_stddevs))
 
-    os.makedirs(folder, exist_ok=True)
-    np.savetxt(os.path.join(folder, "output.txt"), data_new)
+    _save_skumanich_cache(folder, {"output.txt": data_new, "stddev.txt": stddev_new}, meta)
 
     return data_new, stddev_new
 
 def skumanich_analytique(folder, cfg :config, data_avg):
-    epsilons=data_avg[:,4][::100000]
-    ts=data_avg[:,0][::100000]
-    kappas=data_avg[:,3][::100000]
-    Omegas=data_avg[:,5][::100000]
+    stride = 100000
+    meta = _skumanich_cache_meta("skumanich_analytique", cfg, data_avg, stride)
+    cached = _load_skumanich_cache(folder, ["output.txt"], meta)
+    if cached is not None:
+        return cached[0]
+
+    epsilons=data_avg[:,4][::stride]
+    ts=data_avg[:,0][::stride]
+    kappas=data_avg[:,3][::stride]
+    Omegas=data_avg[:,5][::stride]
     B_eqs=[]
     b_eqs=[]
     for epsiloneq in epsilons : 
@@ -513,11 +570,10 @@ def skumanich_analytique(folder, cfg :config, data_avg):
                     tfin=10)
         B_eq,b_eq = cfg_new.get_eq()[0]
         B_eqs.append(B_eq)
-        b_eq.append(b_eq)
+        b_eqs.append(b_eq)
     data_new = np.column_stack((ts, B_eqs, b_eqs, kappas, epsilons, Omegas))
 
-    os.makedirs(folder, exist_ok=True)
-    np.savetxt(os.path.join(folder, "output.txt"), data_new)
+    _save_skumanich_cache(folder, {"output.txt": data_new}, meta)
     return data_new
 
 def plot_B_omega(data, folder, name="Fig_B_omega", stddevs=None):
@@ -557,8 +613,12 @@ def plot_B_omega(data, folder, name="Fig_B_omega", stddevs=None):
     save_fig(fig, folder, name)
 
 def get_freq(minimas, tfin):
-    [(_,durees)]=minimas
-    return sum(durees)/tfin
+    # minimas is a list of (t_center, duree) tuples, one per detected minimum.
+    # There can be zero, one, or many of them - don't assume a fixed count.
+    if len(minimas) == 0:
+        return 0.0
+    durees = [duree for (_, duree) in minimas]
+    return sum(durees) / tfin
 
 def big_simus():
     tqdm.write("Simulations d'intermittence : début")
