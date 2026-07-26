@@ -315,7 +315,7 @@ def court_terme(show_lambda=True):
 # ==========================================================================================================
 datadir_mid = os.path.join(datadir, "2_Moyen_terme_Intermittence")
 Lambdas = [0.01]
-epsiloneqs = [0, 0.1]
+epsiloneqs = [0.1]
 kappaeqs = [0.1, 1]
 inter_list = [(True, False), (False, True), (True, True)]  # kappa, epsilon
 
