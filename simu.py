@@ -284,7 +284,10 @@ class config:
         t = first_data[:, 0]
         values_stack = np.stack([d[:, 1:] for d in data_runs], axis=-1)
         averaged_values = np.mean(values_stack, axis=-1)
-        stddevs = np.std(values_stack,axis=-1)
+        # Colonne factice en position 0 (comme dans std_100 : zeros, B, b, ...)
+        # pour que stddevs[:, i] corresponde bien à la colonne i de data_avg
+        # (i=1 -> B, i=2 -> b, etc.), et pas décalé d'un cran.
+        stddevs = np.column_stack((np.zeros_like(t), np.std(values_stack, axis=-1)))
         data_avg = np.column_stack((t, averaged_values))
         return data_runs, data_avg, stddevs
         
@@ -307,6 +310,18 @@ class config:
 
             B_stddev=stddevs[:,1]
             b_stddevs=stddevs[:,2]
+
+            # Sous-échantillonnage pour le fill_between : avec les
+            # simulations 'long' non-downsamplées (skumanich_mean),
+            # t/B/b peuvent contenir des millions de points bruités.
+            # Passer ça tel quel à fill_between crée un polygone
+            # (avec ses auto-intersections) beaucoup trop complexe pour
+            # le rasterizer Agg, qui plante avec "Exceeded cell block
+            # limit". On sous-échantillonne donc uniquement la bande
+            # d'incertitude (la courbe centrale, elle, reste tracée en
+            # pleine résolution).
+            max_fill_points = 20000
+            fb_stride = max(1, len(t) // max_fill_points)
         B = data[:, 1]
         b = data[:, 2]
 
@@ -352,7 +367,12 @@ class config:
             )
 
             if stddevs is not None : 
-                ax.fill_between(t,B-B_stddev,B+b_stddevs, color=_OKABE_ITO["sky_blue"])
+                ax.fill_between(
+                    t[::fb_stride],
+                    (B - B_stddev)[::fb_stride],
+                    (B + B_stddev)[::fb_stride],
+                    color=_OKABE_ITO["sky_blue"]
+                )
 
         if is_b:
             ax.plot(
@@ -364,7 +384,13 @@ class config:
             )
 
             if stddevs is not None : 
-                            ax.fill_between(t,b-b_stddevs,b+B_stddev, color=_OKABE_ITO["sky_orange"])
+                ax.fill_between(
+                    t[::fb_stride],
+                    (b - b_stddevs)[::fb_stride],
+                    (b + b_stddevs)[::fb_stride],
+                    color=_OKABE_ITO["sky_orange"]
+                )
+
 
         # ============================================================
         # Solutions d'équilibre
@@ -700,7 +726,7 @@ class config:
             ax.legend(fontsize=PLOT_STYLE["legend_fontsize"], frameon=False)
 
         if freq is not None : 
-            ax.text(0.8, 0.8, "$f=="+str(freq),
+            ax.text(0.8, 0.8, "$f=$"+str(round(freq,2)),
                     transform=ax.transAxes,
                     fontsize=20,
                     color=_OKABE_ITO["vermillion"],

@@ -315,8 +315,8 @@ def court_terme(show_lambda=True):
 # ==========================================================================================================
 datadir_mid = os.path.join(datadir, "2_Moyen_terme_Intermittence")
 Lambdas = [0.01]
-epsiloneqs = [0.1]
-kappaeqs = [0.1, 1]
+epsiloneqs = [-0.1,0,0.1]
+kappaeqs = [0,0.1, 1]
 inter_list = [(True, False), (False, True), (True, True)]  # kappa, epsilon
 
 
@@ -450,8 +450,8 @@ def plot_fig4(t, B, b, kappa_data, epsilon_data, inter_kappa, inter_epsilon, fol
     fig_4_B_b, ax_4_B_b = new_figure()
     fig_4_stat, ax_4_stat = new_figure()
 
-    ax_4_B_b.plot(t, B, color='blue', lw=PLOT_STYLE["linewidth"], label=r"$B(t)$")
-    ax_4_B_b.plot(t, b, color='orange', lw=PLOT_STYLE["linewidth"], label=r"$b(t)$")
+    ax_4_B_b.plot(t, B, color=PLOT_STYLE["color_B"], lw=PLOT_STYLE["linewidth"], label=r"$B(t)$")
+    ax_4_B_b.plot(t, b, color=PLOT_STYLE["color_b"], lw=PLOT_STYLE["linewidth"], label=r"$b(t)$")
     if inter_kappa:
         ax_4_stat.plot(t, kappa_data, color='red', lw=PLOT_STYLE["linewidth"], label=r"$\kappa(t)$")
     if inter_epsilon:
@@ -638,6 +638,7 @@ def big_simus():
                     taukappa = random.choice([10**3,10**4])
                     deltaepsilon = random.choice([10**(-4),10**(-5)])
                     deltakappa = random.choice([10**(-4),10**(-5)])
+                    data_list_per_kappa = []  # une entrée par kappa, chacune = liste des 10 simus non-moyennées
                     for run_idx, kappaeq in enumerate(tqdm(kappaeqs, desc="kappa_dependency", position=2, leave=False)):
                         cfg = config(datadir=folder_fig_3, term='mid',
                                      epsiloneq=epsiloneq, Lambda=Lambda, kappaeq=kappaeq,
@@ -649,6 +650,7 @@ def big_simus():
                         cfg.B0 = B_eq
                         cfg.b0 = b_eq
                         data_list, data_avg, _ = cfg.run_and_avg(save_all=True, save_figs=True)
+                        data_list_per_kappa.append(data_list)
                         minimas_total = []
                         for data in data_list:
                             minimas = cfg.stat_analysis(data)
@@ -673,6 +675,33 @@ def big_simus():
 
                     save_fig(fig_3_B, folder_fig_3, "Fig_3_B_large", dpi=300)
                     save_fig(fig_3_b, folder_fig_3, "Fig_3_b_small", dpi=300)
+
+                    # Graphes équivalents, mais pour chaque simulation individuelle
+                    # (non-moyennée) : pour chaque indice de run r (1 a 10), on
+                    # superpose les 3 courbes B (une par kappa) issues de la
+                    # r-ieme simulation de chaque kappa, et pareil pour b.
+                    folder_runs = os.path.join(folder_fig_3, "simus_individuelles")
+                    n_runs = min(len(dl) for dl in data_list_per_kappa)
+                    for r in range(n_runs):
+                        fig_r_B, ax_r_B = new_figure()
+                        fig_r_b, ax_r_b = new_figure()
+                        for k, kappaeq in enumerate(kappaeqs):
+                            data_r = data_list_per_kappa[k][r]
+                            t = data_r[:, 0]
+                            B = data_r[:, 1]
+                            b = data_r[:, 2]
+                            ax_r_B.plot(t, B, lw=PLOT_STYLE["linewidth"], label=r"$\kappa$=" + str(kappaeq))
+                            ax_r_b.plot(t, b, lw=PLOT_STYLE["linewidth"], label=r"$\kappa$=" + str(kappaeq))
+
+                        for ax in [ax_r_B, ax_r_b]:
+                            style_axis(ax, xlabel="t")
+
+                        fig_r_B.tight_layout()
+                        fig_r_b.tight_layout()
+
+                        save_fig(fig_r_B, folder_runs, f"Fig_3_B_run{r + 1:02d}", dpi=300)
+                        save_fig(fig_r_b, folder_runs, f"Fig_3_b_run{r + 1:02d}", dpi=300)
+
                     cfg.write_config_file()
 
                 if inter_kappa and (not inter_epsilon):
@@ -713,7 +742,7 @@ def big_simus():
                         kappaeq_folder = os.path.join(comportements_folder, "kappaeq=" + str(kappaeq))
                         minimas_list = []
                         cfg = None
-                        for i in range(2):
+                        for i in range(3):
                             cfg = config(datadir=kappaeq_folder, term='mid',
                                          epsiloneq=epsiloneq, Lambda=Lambda, kappaeq=kappaeq, run_index=i + 1,
                                          inter_kappa=inter_kappa, inter_epsilon=inter_epsilon)
@@ -736,5 +765,5 @@ def big_simus():
     tqdm.write("Simulations d'intermittence : fin")
 
 if __name__ == "__main__":
-    #court_terme()
+    court_terme()
     big_simus()

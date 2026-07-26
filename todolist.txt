@@ -1,28 +1,4 @@
-Skumanich : 
-    - Augmenter le temps de simulation de manière physiquement logique (comparer les 1/tau au courriel de charbonneau)
-    - Mettre x en Gyr
-    - Faire le même graphe que maintenant en ajoutant la déviation standard et grizer la zone 
-    - Faire un autre graphe semblable où on divise en 1000 points, pour lesquel on lance 10 simu mid à tfin=50000 avec epsiloneq défini par
-    skumanich. On prend la moyenne, la stdev, et on plot. Le faire avce les mêmes paramètres que l'autre pour mieux comparer.
-    - Dans les deux cas, ajouter epsilon en pointillés avec l'échelle à droite
-    - Trait vertical à l'âge du soleil
-    - Tracer B en fonction de Omega
-
-
-Intermittence générale : 
-    - Faire x5 (?) au temps de simulation pour les mid pour maxxer les histogrammes
-    - mettre x_label = sigma_b * t
-
-Graphisme général : changer le bleu de B et l'orange de b, sont moches
-
-Balaye : 
-    - Tripler taille de la légende
-    - label b_landau redondant 
-    • changer les 1e-2 en 0.01 par ex
-    - B_landau ==> B_eq (pareil pour b)
-    • Couleurs, changer la gamme de bleus
-    • mettre un bool qui permet de mettre la valeur de Lambda dans le graphe qqpart
-
 Kappa dependency : 
-    • Garder le même graphe pour l'average, mais en plus faire les graphes pour les 10 simulations individuelles
-    • Pour chaque valeur de kappa, calculer la fréquence de grands minimas. L'ajouter dans la légende ?
+• Mettre aussi les graphes pour les simus individuelles
+• Mettre fréquence deux chiffres après la virgule
+• Faire les trois kappas

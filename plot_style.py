@@ -43,10 +43,10 @@ PLOT_STYLE = {
     "markersize": 4,
 
     # ---- Font sizes (points, at final print size) --------------------------
-    "label_fontsize": 9,
+    "label_fontsize": 10,
     "title_fontsize": 10,
-    "legend_fontsize": 9,
-    "tick_fontsize": 8,
+    "legend_fontsize": 10,
+    "tick_fontsize": 10,
 
     # ---- Grid / axes --------------------------------------------------------
     "grid_alpha": 0.25,
