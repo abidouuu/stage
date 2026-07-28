@@ -316,7 +316,7 @@ def court_terme(show_lambda=True):
 datadir_mid = os.path.join(datadir, "2_Moyen_terme_Intermittence")
 Lambdas = [0.1]
 epsiloneqs = [0.1]
-kappaeqs = [0.1, 1]
+kappaeqs = [0,0.1, 1]
 inter_list = [(True, False), (False, True), (True, True)]  # kappa, epsilon
 
 
@@ -709,7 +709,7 @@ def big_simus():
                     skumanich_100_folder = os.path.join(epsiloneq_folder, "skumanich_100")
                     skumanich_analytique_folder = os.path.join(epsiloneq_folder, "skumanich_analytique")
 
-                    for kappaeq in tqdm(kappaeqs, desc="skumanich", position=2, leave=False):
+                    for kappaeq in tqdm([0.1,1], desc="skumanich", position=2, leave=False):
                         kappaeq_mean_folder = os.path.join(skumanich_mean_folder, "kappaeq=" + str(kappaeq))
                         kappaeq_100_folder = os.path.join(skumanich_100_folder, "kappaeq=" + str(kappaeq))
                         kappaeq_analytique_folder = os.path.join(skumanich_analytique_folder, "kappaeq="+ str(kappaeq))
