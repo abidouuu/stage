@@ -314,8 +314,8 @@ def court_terme(show_lambda=True):
 # -------------- FIGURES 3,4,5,6 : Moyen terme, intermittence ---------------------------------------------
 # ==========================================================================================================
 datadir_mid = os.path.join(datadir, "2_Moyen_terme_Intermittence")
-Lambdas = [0.01]
-epsiloneqs = [0.1]
+Lambdas = [0.1]
+epsiloneqs = [-0.1,0,0.1]
 kappaeqs = [0,0.1, 1]
 inter_list = [(True, False), (False, True), (True, True)]  # kappa, epsilon
 
@@ -699,7 +699,7 @@ def big_simus():
                         fig_r_B.tight_layout()
                         fig_r_b.tight_layout()
 
-                        save_fig(fig_r_B, folder_runs, f"Fig_3_B_run{r + 1:02d}", dpi=300)
+                        save_fig(fig_r_B, folder_runs, f"Fig_3_Big_run{r + 1:02d}", dpi=300)
                         save_fig(fig_r_b, folder_runs, f"Fig_3_b_run{r + 1:02d}", dpi=300)
 
                     cfg.write_config_file()
