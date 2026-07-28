@@ -6,7 +6,7 @@ B0 = 10.186104367191051
             kappaeq = 0.1
 
             tauepsilon = 10000
-            taukappa = 10000
+            taukappa = 1000
             deltaepsilon = 1e-05
             deltakappa = 1e-05
 

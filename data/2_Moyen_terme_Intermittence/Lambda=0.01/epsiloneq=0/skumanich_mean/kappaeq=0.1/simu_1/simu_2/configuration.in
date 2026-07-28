@@ -6,9 +6,9 @@ B0 = 10.186104367191051
             kappaeq = 0.1
 
             tauepsilon = 10000
-            taukappa = 10000
+            taukappa = 1000
             deltaepsilon = 0.0001
-            deltakappa = 0.0001
+            deltakappa = 1e-05
 
             inter_kappa = true
             inter_epsilon = false

@@ -7,7 +7,7 @@ B0 = 0
 
             tauepsilon = 10000
             taukappa = 10000
-            deltaepsilon = 1e-05
+            deltaepsilon = 0.0001
             deltakappa = 0.0001
 
             inter_kappa = true
