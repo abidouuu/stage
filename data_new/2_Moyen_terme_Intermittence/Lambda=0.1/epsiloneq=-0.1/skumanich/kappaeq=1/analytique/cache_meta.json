@@ -1,0 +1,1 @@
+{"kind": "skumanich_analytique", "Lambda": 0.1, "epsiloneq": -0.1, "kappaeq": 1, "tfin": 1000, "taukappa": 1000, "deltaepsilon": -15, "deltakappa": -15, "stride": 100000, "n_points": 100002}
