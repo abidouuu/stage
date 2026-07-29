@@ -79,7 +79,7 @@ def style_axis(
                 loc=legend_loc
             )
 
-            
+
 def save_fig(fig, folder, filename,
              dpi=None,
              bbox_inches=None,
@@ -926,7 +926,7 @@ def big_simus():
                             epsilon_data = data[:, 4]
                             minimas = cfg.stat_analysis(data=data)
                             minimas_list.extend(minimas)
-                            plot_fft(t, kappa_data, r"$\kappa(t)$", cfg.folder, "kappa")
+                            #plot_fft(t, kappa_data, r"$\kappa(t)$", cfg.folder, "kappa")
                             plot_fig5(epsilon_data, kappa_data, B, cfg.folder)
                             plot_fig4(t, B, b, kappa_data, epsilon_data, inter_kappa, inter_epsilon, cfg.folder)
                         freq=get_freq(minimas=minimas_list,tfin=cfg.tfin)
