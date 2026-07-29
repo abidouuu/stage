@@ -64,9 +64,9 @@ class config:
             if taukappa is None:
                 taukappa = 10**3
             if deltaepsilon is None:
-                deltaepsilon = 10^-5
+                deltaepsilon = 1e-5
             if deltakappa is None:
-                deltakappa = 10^-5
+                deltakappa = 1e-5
             if inter_kappa is None :
                 inter_kappa=True
             if inter_epsilon is None : 
