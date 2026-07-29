@@ -1,13 +1,3 @@
-# plot_style.py
-#
-# Matplotlib style tuned for Physical Review E (APS) submission figures.
-#
-# Sizing follows APS column widths (single column = 3.375 in = 8.57 cm,
-# double column = 7.0 in = 17.8 cm), fonts are sized to match APS body text
-# (~8-10 pt at final print size) rather than "screen-comfortable" sizes, and
-# colors come from the Okabe-Ito palette, which is colorblind-safe and holds
-# up under grayscale/print conversion.
-
 import matplotlib.pyplot as plt
 
 # Okabe-Ito colorblind-safe palette (Okabe & Ito, 2008).
@@ -32,7 +22,7 @@ PLOT_STYLE = {
     # Full double-column width, for wide single-row figures.
     "figsize_double": (7.0, 3.0),
     # Full double-column width, taller (e.g. stacked subplots spanning both columns).
-    "figsize_double_tall": (7.0, 6.0),
+    "figsize_double_tall": (8, 8),
 
     # ---- Line weights ------------------------------------------------------
     # Curves must stay legible after being shrunk into a single column at
@@ -43,10 +33,10 @@ PLOT_STYLE = {
     "markersize": 4,
 
     # ---- Font sizes (points, at final print size) --------------------------
-    "label_fontsize": 10,
-    "title_fontsize": 10,
-    "legend_fontsize": 10,
-    "tick_fontsize": 10,
+    "label_fontsize": 15,
+    "title_fontsize": 15,
+    "legend_fontsize": 15,
+    "tick_fontsize": 15,
 
     # ---- Grid / axes --------------------------------------------------------
     "grid_alpha": 0.25,
@@ -131,7 +121,14 @@ plt.rcParams.update({
 
     # ---- Saving ------------------------------------------------------------
     "savefig.dpi": PLOT_STYLE["dpi"],
-    "savefig.bbox": "tight",
+    # IMPORTANT : ne PAS mettre "tight" ici. bbox="tight" recadre chaque figure
+    # sur son contenu réel (légende, labels, ticks), donc deux figures avec le
+    # même figsize peuvent finir avec des dimensions différentes en pixels dès
+    # que leur contenu diffère un peu (légende plus longue, etc.). En laissant
+    # None, la taille de sortie est toujours exactement figsize * dpi, donc
+    # deux figures du même type (même figsize) ont TOUJOURS exactement la
+    # même taille finale.
+    "savefig.bbox": None,
     "savefig.pad_inches": 0.02,
     "savefig.transparent": False,
 

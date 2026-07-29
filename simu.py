@@ -62,11 +62,11 @@ class config:
             if tauepsilon  is None:
                 tauepsilon = 10**4
             if taukappa is None:
-                taukappa = random.choice([10**3,10**4])
+                taukappa = 10**3
             if deltaepsilon is None:
-                deltaepsilon = random.choice([10**(-4),10**(-5)])
+                deltaepsilon = 10^-5
             if deltakappa is None:
-                deltakappa = random.choice([10**(-4),10**(-5)])
+                deltakappa = 10^-5
             if inter_kappa is None :
                 inter_kappa=True
             if inter_epsilon is None : 
@@ -75,8 +75,8 @@ class config:
                 simu_title="simu_"
             if tfin is None : 
                 if term=='short' : tfin=400
-                elif term=='mid' : tfin=2e5
-                elif term=='long' : tfin=4e5
+                elif term=='mid' : tfin=1000
+                elif term=='long' : tfin=1000
                 else:tfin=40
 
             if run_index is not None:
@@ -299,17 +299,18 @@ class config:
               minimas=None,
               eps=False,
               differentfolder=None,
-              stddevs=None):
+              stddevs=None,
+              analytique=False):
 
         t = data[:, 0]
-        if stddevs is not None : 
+        if stddevs is not None or analytique : 
             t_ini_Gyr = 1
             t_fin_Gyr = 10
             t_sun_Gyr = 4.6
             t = t_ini_Gyr + (t_fin_Gyr-t_ini_Gyr)*(t/self.tfin)
-
-            B_stddev=stddevs[:,1]
-            b_stddevs=stddevs[:,2]
+            if stddevs is not None :
+                B_stddev=stddevs[:,1]
+                b_stddevs=stddevs[:,2]
 
             # Sous-échantillonnage pour le fill_between : avec les
             # simulations 'long' non-downsamplées (skumanich_mean),
@@ -541,7 +542,7 @@ class config:
         ax_eps = None
 
         if (
-            stddevs is not None
+            (stddevs is not None or analytique)
             and type != "epsilon"
             and epsilon is not None
         ):
@@ -564,7 +565,7 @@ class config:
         # Style global
         # ============================================================
 
-        if stddevs is not None :
+        if stddevs is not None or analytique :
             ax.set_xlabel("Age (Gyr)")
             plt.axvline(x=t_sun_Gyr, color=_OKABE_ITO["black"], ls='--', 
                         linewidth=PLOT_STYLE["linewidth"],
@@ -653,7 +654,7 @@ class config:
         B = data[:, 1]
         eq=self.get_eq()
         (B_eq,b_eq)=eq[0]
-        if B_eq==0 : B_eq=max(B)
+        if B_eq==0 : B_eq=stat.mean(B)
         threshold=0.1*B_eq
         B_minimas=[x<threshold for x in B]
 
@@ -672,7 +673,7 @@ class config:
         return minimas
     
     def plot_histograms(self, minimas_list, differentfolder=None, show=False, name=None,
-                         labels=None, xlabel="Duration", density=False, freq=None):
+                         labels=None, xlabel="Duration", density=True, freq=None):
         
         if len(minimas_list) > 0 and isinstance(minimas_list[0], tuple):
             minimas_list = [minimas_list]
@@ -692,7 +693,7 @@ class config:
             bin_width = 2 * iqr / (len(pooled) ** (1 / 3))
             n_bins = int(np.clip(np.ceil((pooled.max() - pooled.min()) / bin_width), 8, 60))
         else:
-            n_bins = 15
+            n_bins = 12
         bins = np.linspace(pooled.min(), pooled.max(), n_bins + 1)
 
         palette = PLOT_STYLE["palette"]

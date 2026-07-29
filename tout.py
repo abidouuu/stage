@@ -17,7 +17,7 @@ logging.getLogger('matplotlib.backends.backend_ps').setLevel(logging.ERROR)
 from plot_style import PLOT_STYLE, _OKABE_ITO
 
 workdir = os.path.dirname(os.path.abspath(__file__))
-datadir = os.path.join(workdir, "data")
+datadir = os.path.join(workdir, "data_new")
 
 
 # ==========================================================================================================
@@ -90,8 +90,13 @@ def style_axis(
 
 def save_fig(fig, folder, filename,
              dpi=None,
-             bbox_inches="tight",
+             bbox_inches=None,
              close=True):
+    # bbox_inches=None (et non "tight") : on veut que la taille de sortie
+    # soit exactement figsize (celle passée à new_figure) pour TOUTES les
+    # figures d'un même type, indépendamment de la longueur des légendes/
+    # labels. "tight" recadre sur le contenu réel et fait varier la taille
+    # finale d'une figure à l'autre du même type.
 
     if dpi is None:
         dpi = PLOT_STYLE["dpi"]
@@ -199,13 +204,113 @@ def find_empty_spot(ax, grid_size=25, margin=0.08, max_points_per_line=200, avoi
 datadir_short = os.path.join(datadir, "1_Court_terme_analytique")
 datadir_fig1 = os.path.join(datadir_short, "Figure_1_balaye_kappa")
 datadir_fig2 = os.path.join(datadir_short, "Figure_2_balaye_epsilon")
+def best_label_position(xs, curve, other_curves, n_candidates=300):
+    """
+    Find a good place to put a label on a curve.
 
+    Parameters
+    ----------
+    xs : array
+        x coordinates
+    curve : array
+        curve to label
+    other_curves : list of arrays
+        other curves already plotted
+    n_candidates : int
+        number of tested positions
+
+    Returns
+    -------
+    xlab, ylab, side
+    """
+
+    xs = np.asarray(xs)
+    curve = np.asarray(curve)
+
+    # candidate points (avoid edges)
+    idx_candidates = np.linspace(
+        int(0.1*len(xs)),
+        int(0.9*len(xs)),
+        n_candidates
+    ).astype(int)
+
+    scores = []
+
+    for idx in idx_candidates:
+
+        x = xs[idx]
+        y = curve[idx]
+
+        score = 0
+
+        # -----------------------------------
+        # 1) Distance from other curves
+        # -----------------------------------
+        min_dist = np.inf
+
+        for other in other_curves:
+
+            d = abs(y - other[idx])
+            min_dist = min(min_dist, d)
+
+        # reward empty space
+        score += min_dist**2
+
+
+        # -----------------------------------
+        # 2) Prefer flat parts of curve
+        # -----------------------------------
+        if 1 < idx < len(xs)-2:
+            slope = abs(
+                (curve[idx+2]-curve[idx-2]) /
+                (xs[idx+2]-xs[idx-2])
+            )
+
+            score -= 0.05*slope
+
+
+        # -----------------------------------
+        # 3) Avoid too extreme x positions
+        # -----------------------------------
+        edge_penalty = (
+            abs(idx-len(xs)/2)/(len(xs)/2)
+        )
+
+        score -= 0.1*edge_penalty
+
+        ymin, ymax = np.nanmin(curve), np.nanmax(curve)
+
+        margin = 0.15*(ymax-ymin)
+
+        if y + margin > ymax:
+            score -= 100
+
+        if y - margin < ymin:
+            score -= 100
+
+        scores.append(score)
+
+
+    best = idx_candidates[np.argmax(scores)]
+
+    xlab = xs[best]
+    ylab = curve[best]
+
+
+    # decide whether label goes above or below
+    # depending on free space
+    if best < len(xs)//2:
+        side = 1
+    else:
+        side = -1
+
+    return xlab, ylab, side
 
 def balayage(vary_epsilon, show_lambda=True):  # x varie continûment, y quelques courbes.
     Lambdas = [0.001, 0.01, 0.1, 1]
     epsilons_x = np.linspace(-2, 2, 10000)
     kappas_x = 10 ** np.linspace(-3, 2, 10000)
-    epsilons_y = [-0.1, -0.01, 0, 0.01, 0.1]
+    epsilons_y = [0.1, 0.01, 0, -0.01, -0.1]
     kappas_y = 10.0 ** np.arange(-2, 2)
 
     if vary_epsilon:
@@ -228,12 +333,12 @@ def balayage(vary_epsilon, show_lambda=True):  # x varie continûment, y quelque
 
         # gamme élargie (0.15 à 1.0) pour des couleurs mieux distinguables,
         # notamment entre les courbes voisines
-        blues = Blues(np.linspace(0.15, 1.0, len(ys)))
-        oranges = Oranges(np.linspace(0.15, 1.0, len(ys)))
+        blues = Blues(np.linspace(0.35, 1.0, len(ys)))
+        oranges = Oranges(np.linspace(0.35, 1.0, len(ys)))
 
         if not vary_epsilon:
             greens_bool = [a >= 0 for a in ys]
-            greens = Greens(np.linspace(0.15, 1.0, len(greens_bool)))
+            greens = Greens(np.linspace(0.55, 1.0, len(greens_bool)))
 
         first = True
         # FIX: green_idx must be initialized once, OUTSIDE the y-loop, so that
@@ -241,6 +346,9 @@ def balayage(vary_epsilon, show_lambda=True):  # x varie continûment, y quelque
         # instead of every curve reusing greens[0].
         green_idx = 0
 
+        landau_curves = []
+        landau_colors = []
+        positive_eps = []
         for y_idx, y in enumerate(ys):
             B, b = [], []
             B_landau, b_landau = [], []
@@ -275,26 +383,79 @@ def balayage(vary_epsilon, show_lambda=True):  # x varie continûment, y quelque
                 axb.plot(xs, b_landau, color='green', ls="--", lw=PLOT_STYLE["linewidth"], label=r"$b_\text{eq}$" if first else None)
                 first=False
                 if y >= 0:
-                    axB.plot(xs, B_landau, color=greens[green_idx], ls="--", lw=PLOT_STYLE["linewidth"], label=r"$B_\text{eq}$ : " + label)
+                    # on garde une référence à LA couleur utilisée ici, pour
+                    # pouvoir colorer le label epsilon correspondant plus tard
+                    # avec exactement la même couleur (cf. landau_colors ci-dessous)
+                    color_landau = greens[green_idx]
+                    axB.plot(xs, B_landau, color=color_landau, ls="--", lw=PLOT_STYLE["linewidth"], label=None)
                     green_idx += 1
 
             axB.plot(xs, B, color=blues[y_idx], lw=PLOT_STYLE["linewidth"], label=label)
-            axb.plot(xs, b, color=oranges[y_idx], lw=PLOT_STYLE["linewidth"], label=label)
+            axb.plot(xs, b, color=oranges[y_idx], lw=PLOT_STYLE["linewidth"],label=label)
 
+            if not vary_epsilon and y >= 0:
+                landau_curves.append(np.asarray(B_landau))
+                positive_eps.append(y)
+                landau_colors.append(color_landau)
+
+        # Placement automatique des labels epsilon
+        if not vary_epsilon:
+
+            # de la marge verticale autour des courbes B, pour que les labels
+            # (qui se placent avec un offset de 10 pts au-dessus/en-dessous
+            # du point choisi) aient la place d'exister sans sortir du cadre.
+            # A faire AVANT la boucle d'annotation, pour que best_label_position
+            # et l'annotate voient les limites finales de l'axe.
+            axB.autoscale(enable=True, axis='y')
+            axB.margins(y=0.18)
+
+            for eps, curve, color in zip(positive_eps, landau_curves, landau_colors):
+
+                xlab, ylab, side = best_label_position(
+                    xs,
+                    curve,
+                    [c for c in landau_curves if c is not curve]
+                )
+
+                axB.annotate(
+                    rf"$\varepsilon={fmt_num(eps)}$",
+                    xy=(xlab, ylab),
+                    xytext=(0, 10*side),
+                    textcoords="offset points",
+                    color=color,
+                    fontsize=PLOT_STYLE["legend_fontsize"],
+                    ha="center",
+                    va="bottom" if side > 0 else "top",
+                    annotation_clip=True,
+                    clip_on=True,
+                )
         style_axis(axB, ylabel="B", xscale=xscale)
         style_axis(axb, xlabel=r"$\varepsilon$" if vary_epsilon else r"$\kappa$", ylabel="b", xscale=xscale)
 
         if show_lambda:
-            x_spot, y_spot = find_empty_spot(axb)
-            axb.text(
-                x_spot, y_spot, rf"$\Lambda={fmt_num(Lambda)}$",
-                transform=axb.transAxes,
-                fontsize=20,
-                color=_OKABE_ITO["vermillion"],
-                va="center", ha="center"
-            )
+            if vary_epsilon : 
+                axB.text(
+                    0.8, 0.1, rf"$\Lambda={fmt_num(Lambda)}$",
+                    transform=axB.transAxes,
+                    fontsize=20,
+                    color=_OKABE_ITO["vermillion"],
+                    va="center", ha="center"
+                )
+            else : 
+                axb.text(
+                    0.8, 0.4, rf"$\Lambda={fmt_num(Lambda)}$",
+                    transform=axb.transAxes,
+                    fontsize=20,
+                    color=_OKABE_ITO["vermillion"],
+                    va="center", ha="center"
+                )
 
-        fig.tight_layout()
+        # subplots_adjust avec des marges FIXES (et non tight_layout, qui
+        # recadre selon le contenu et ferait varier la taille finale d'une
+        # figure a l'autre). Ces valeurs sont les memes pour toutes les
+        # figures de balayage() -> sortie toujours meme taille, avec moins
+        # de blanc que les marges par defaut de matplotlib.
+        fig.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08, hspace=0.06)
         cfg.write_config_file()
         save_fig(fig, cfg.folder, f"Lambda={Lambda}")
 
@@ -473,7 +634,7 @@ def plot_fig4(t, B, b, kappa_data, epsilon_data, inter_kappa, inter_epsilon, fol
     save_fig(fig_4_stat, folder, "Fig_4_stat")
 
 def _skumanich_cache_meta(kind, cfg: config, data_avg, stride):
-    """Fingerprint of everything that changes the result of a skumanich_100 /
+    """Fingerprint of everything that changes the result of a skumanich_500 /
     skumanich_analytique call. If any of this differs from what's stored on
     disk, the cache is considered stale and the computation is redone."""
     return {
@@ -516,9 +677,9 @@ def _save_skumanich_cache(folder, arrays, meta):
     with open(os.path.join(folder, "cache_meta.json"), "w", encoding="utf-8") as f:
         json.dump(meta, f)
 
-def skumanich_100(folder, cfg :config, data_avg):
-    stride = 400000
-    meta = _skumanich_cache_meta("skumanich_100", cfg, data_avg, stride)
+def skumanich_500(folder, cfg :config, data_avg):
+    stride = 80000
+    meta = _skumanich_cache_meta("skumanich_500", cfg, data_avg, stride)
     cached = _load_skumanich_cache(folder, ["output.txt", "stddev.txt"], meta)
     if cached is not None:
         return cached[0], cached[1]
@@ -531,10 +692,13 @@ def skumanich_100(folder, cfg :config, data_avg):
     B_stddevs=[]
     b_means=[]
     b_stddevs=[]
-    for epsiloneq in tqdm(epsilons, desc="skumanich_100 inner", leave=False): 
+    B0=cfg.B0
+    b0=cfg.b0
+    kappaeq=cfg.kappaeq
+    for epsiloneq in tqdm(epsilons, desc="skumanich_500 inner", leave=False): 
         cfg_new= config(datadir=folder, term='mid',
-                    epsiloneq=epsiloneq, Lambda=cfg.Lambda, kappaeq=cfg.kappaeq, run_index=1,
-                    inter_kappa=True, inter_epsilon=True,
+                    epsiloneq=epsiloneq, Lambda=cfg.Lambda, kappaeq=kappaeq, run_index=1,
+                    inter_kappa=True, inter_epsilon=True, B0=B0, b0=b0,
                     taukappa=cfg.taukappa, deltaepsilon=cfg.deltaepsilon, deltakappa=cfg.deltakappa,
                     tfin=cfg.tfin/10)
         data=cfg_new.run(save=False)
@@ -542,6 +706,9 @@ def skumanich_100(folder, cfg :config, data_avg):
         B_stddevs.append(np.std(data[:,1]))
         b_means.append(np.mean(data[:,2]))
         b_stddevs.append(np.std(data[:,2]))
+        B0=data[-1,1]
+        b0=data[-1,2]
+        kappaeq=data[-1,3]
     data_new = np.column_stack((ts, B_means, b_means, kappas, epsilons, Omegas))
     stddev_new = np.column_stack((np.zeros_like(ts), B_stddevs, b_stddevs))
 
@@ -576,10 +743,11 @@ def skumanich_analytique(folder, cfg :config, data_avg):
     _save_skumanich_cache(folder, {"output.txt": data_new}, meta)
     return data_new
 
-def plot_B_omega(data, folder, name="Fig_B_omega", stddevs=None):
+def plot_B_omega(data, folder, name="Fig_B_omega", stddevs=None, data_analytique=None):
     """Trace B en fonction d'Omega (au lieu de B(t)).
     Fonctionne aussi bien avec les données skumanich_mean (t,B,b,kappa,epsilon,Omega,
-    6 colonnes) qu'avec celles de skumanich_100 (même ordre de colonnes)."""
+    6 colonnes) qu'avec celles de skumanich_500 (même ordre de colonnes).
+    Si data_analytique est fourni, superpose la courbe analytique en pointillés noirs."""
     Omega = data[:, 5]
     B = data[:, 1]
 
@@ -605,6 +773,18 @@ def plot_B_omega(data, folder, name="Fig_B_omega", stddevs=None):
             B_sorted + B_stddev,
             color=_OKABE_ITO["sky_blue"],
             alpha=0.25
+        )
+
+    if data_analytique is not None:
+        Omega_a = data_analytique[:, 5]
+        B_a = data_analytique[:, 1]
+        order_a = np.argsort(Omega_a)
+        ax.plot(
+            Omega_a[order_a], B_a[order_a],
+            color="black",
+            linestyle="--",
+            lw=PLOT_STYLE["linewidth"],
+            label=r"$B(\Omega)$ analytique"
         )
 
     style_axis(ax, xlabel=r"$\Omega$", ylabel="B")
@@ -634,17 +814,11 @@ def big_simus():
                     fig_3_B, ax_3_B = new_figure()
                     fig_3_b, ax_3_b = new_figure()
                     minimas_folder = os.path.join(folder_fig_3, "minimas")
-                    tauepsilon = 10**4
-                    taukappa = random.choice([10**3,10**4])
-                    deltaepsilon = random.choice([10**(-4),10**(-5)])
-                    deltakappa = random.choice([10**(-4),10**(-5)])
                     data_list_per_kappa = []  # une entrée par kappa, chacune = liste des 10 simus non-moyennées
                     for run_idx, kappaeq in enumerate(tqdm(kappaeqs, desc="kappa_dependency", position=2, leave=False)):
                         cfg = config(datadir=folder_fig_3, term='mid',
                                      epsiloneq=epsiloneq, Lambda=Lambda, kappaeq=kappaeq,
                                      inter_kappa=inter_kappa, inter_epsilon=inter_epsilon,
-                                     tauepsilon=tauepsilon, taukappa=taukappa,
-                                     deltaepsilon=deltaepsilon, deltakappa=deltakappa,
                                      run_index=run_idx + 1)
                         (B_eq, b_eq) = cfg.get_eq()[0]
                         cfg.B0 = B_eq
@@ -668,7 +842,7 @@ def big_simus():
                         ax_3_b.plot(t, b, lw=PLOT_STYLE["linewidth"], label=r"$\kappa$=" + str(kappaeq))
 
                     for ax in [ax_3_B, ax_3_b]:
-                        style_axis(ax, xlabel="t")
+                        style_axis(ax, xlabel="t", legend_ncol=len(kappaeqs))
 
                     fig_3_B.tight_layout()
                     fig_3_b.tight_layout()
@@ -694,7 +868,7 @@ def big_simus():
                             ax_r_b.plot(t, b, lw=PLOT_STYLE["linewidth"], label=r"$\kappa$=" + str(kappaeq))
 
                         for ax in [ax_r_B, ax_r_b]:
-                            style_axis(ax, xlabel="t")
+                            style_axis(ax, xlabel="t", legend_ncol=len(kappaeqs))
 
                         fig_r_B.tight_layout()
                         fig_r_b.tight_layout()
@@ -705,14 +879,13 @@ def big_simus():
                     cfg.write_config_file()
 
                 if inter_kappa and (not inter_epsilon):
-                    skumanich_mean_folder = os.path.join(epsiloneq_folder, "skumanich_mean")
-                    skumanich_100_folder = os.path.join(epsiloneq_folder, "skumanich_100")
-                    skumanich_analytique_folder = os.path.join(epsiloneq_folder, "skumanich_analytique")
+                    skumanich_folder = os.path.join(epsiloneq_folder, "skumanich")
 
                     for kappaeq in tqdm([0.1,1], desc="skumanich", position=2, leave=False):
-                        kappaeq_mean_folder = os.path.join(skumanich_mean_folder, "kappaeq=" + str(kappaeq))
-                        kappaeq_100_folder = os.path.join(skumanich_100_folder, "kappaeq=" + str(kappaeq))
-                        kappaeq_analytique_folder = os.path.join(skumanich_analytique_folder, "kappaeq="+ str(kappaeq))
+                        kappaeq_folder = os.path.join(skumanich_folder, "kappaeq=" + str(kappaeq))
+                        kappaeq_mean_folder = os.path.join(kappaeq_folder, "mean")
+                        kappaeq_100_folder = os.path.join(kappaeq_folder, "500")
+                        kappaeq_analytique_folder = os.path.join(kappaeq_folder, "analytique")
                         try:
                             cfg = config(datadir=kappaeq_mean_folder, term='long',
                                          epsiloneq=epsiloneq, Lambda=Lambda, kappaeq=kappaeq, run_index=1,
@@ -721,15 +894,19 @@ def big_simus():
                             cfg.B0 = B_eq
                             cfg.b0 = b_eq
                             _, data_avg, stddevs = cfg.run_and_avg(save_all=True, save_figs=True)
-                            data_100, std_100 = skumanich_100(folder=kappaeq_100_folder, cfg=cfg, data_avg=data_avg)
+                            data_100, std_100 = skumanich_500(folder=kappaeq_100_folder, cfg=cfg, data_avg=data_avg)
                             for type in ['Bb', 'kappa', 'epsilon', 'Omega']:
                                 cfg.plot_time(data_avg, type=type, show=False, stddevs=stddevs, differentfolder=kappaeq_mean_folder)
                                 cfg.plot_time(data_100, type=type, show=False, stddevs=std_100, differentfolder=kappaeq_100_folder)
-                            data_analytique=skumanich_analytique(folder=kappaeq_analytique_folder,cfg=cfg, data_avg=data_avg)
-                            cfg.plot_time(data=data_analytique, type="Bb", show=False, differentfolder=kappaeq_analytique_folder)
-                            plot_B_omega(data_avg, kappaeq_mean_folder, stddevs=stddevs)
-                            plot_B_omega(data_100, kappaeq_100_folder, stddevs=std_100)
-                            plot_B_omega(data_analytique, kappaeq_analytique_folder)
+                            data_analytique = skumanich_analytique(folder=kappaeq_analytique_folder, cfg=cfg, data_avg=data_avg)
+                            cfg.plot_time(data=data_analytique, type="Bb", show=False, differentfolder=kappaeq_analytique_folder, analytique=True)
+
+                            # les deux comparaisons B(Omega) vont directement dans kappaeq_folder,
+                            # à côté des sous-dossiers mean/500/analytique
+                            plot_B_omega(data_avg, kappaeq_folder, name="Fig_B_omega_mean",
+                                         stddevs=stddevs, data_analytique=data_analytique)
+                            plot_B_omega(data_100, kappaeq_folder, name="Fig_B_omega_500",
+                                         stddevs=std_100, data_analytique=data_analytique)
                         except Exception as e:
                             tqdm.write(f"[skumanich] echec pour Lambda={Lambda}, epsiloneq={epsiloneq}, "
                                        f"kappaeq={kappaeq} : {e}")
