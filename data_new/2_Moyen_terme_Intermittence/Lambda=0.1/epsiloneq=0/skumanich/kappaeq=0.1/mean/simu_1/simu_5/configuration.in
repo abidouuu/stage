@@ -1,0 +1,23 @@
+B0 = 3.2744171820641608
+            b0 = 0.8495927743319157
+
+            epsiloneq = 0
+            Lambda = 0.1
+            kappaeq = 0.1
+
+            tauepsilon = 10000
+            taukappa = 1000
+            deltaepsilon = 1e-05
+            deltakappa = 1e-05
+
+            inter_kappa = true
+            inter_epsilon = false
+
+            term = long
+
+            dt = 0.01
+            tfin = 20000
+
+            Beq = 0.953462589245592
+            beq = 0.953462589245592
+        

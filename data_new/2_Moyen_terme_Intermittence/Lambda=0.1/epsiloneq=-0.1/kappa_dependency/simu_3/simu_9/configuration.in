@@ -7,8 +7,8 @@ B0 = 1.3504654609714346
 
             tauepsilon = 10000
             taukappa = 1000
-            deltaepsilon = -15
-            deltakappa = -15
+            deltaepsilon = 1e-05
+            deltakappa = 1e-05
 
             inter_kappa = false
             inter_epsilon = true
@@ -16,7 +16,7 @@ B0 = 1.3504654609714346
             term = mid
 
             dt = 0.01
-            tfin = 1000
+            tfin = 20000
 
             Beq = 1.3504654609714346
             beq = 0.5313903425239105
