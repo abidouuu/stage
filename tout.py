@@ -670,7 +670,7 @@ def _save_skumanich_cache(folder, arrays, meta):
         json.dump(meta, f)
 
 def skumanich_500(folder, cfg :config, data_avg):
-    stride = 80000
+    stride = 160000
     meta = _skumanich_cache_meta("skumanich_500", cfg, data_avg, stride)
     cached = _load_skumanich_cache(folder, ["output.txt", "stddev.txt"], meta)
     if cached is not None:
