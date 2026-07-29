@@ -28,11 +28,18 @@ def new_figure(figsize=None, nrows=1, ncols=1, sharex=False):
     if figsize is None:
         figsize = PLOT_STYLE["figsize"]
 
+    # layout="constrained" : ajuste automatiquement les marges pour que
+    # titres/labels/legendes ne soient jamais coupés, SANS changer la
+    # taille finale de la figure (contrairement à tight_layout() suivi
+    # de bbox_inches="tight", qui recadre le fichier sauvegardé et fait
+    # varier la taille de sortie d'une figure a l'autre). La sortie
+    # reste donc toujours exactement figsize * dpi.
     return plt.subplots(
         nrows=nrows,
         ncols=ncols,
         figsize=figsize,
-        sharex=sharex
+        sharex=sharex,
+        layout="constrained"
     )
 
 def style_axis(
@@ -442,12 +449,9 @@ def balayage(vary_epsilon, show_lambda=True):  # x varie continûment, y quelque
                     va="center", ha="center"
                 )
 
-        # subplots_adjust avec des marges FIXES (et non tight_layout, qui
-        # recadre selon le contenu et ferait varier la taille finale d'une
-        # figure a l'autre). Ces valeurs sont les memes pour toutes les
-        # figures de balayage() -> sortie toujours meme taille, avec moins
-        # de blanc que les marges par defaut de matplotlib.
-        fig.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08, hspace=0.06)
+        # layout="constrained" (défini dans new_figure) ajuste automatiquement
+        # les marges pour que rien ne soit coupé, tout en gardant une sortie
+        # toujours a exactement figsize * dpi, quel que soit le contenu.
         cfg.write_config_file()
         save_fig(fig, cfg.folder, f"Lambda={Lambda}")
 
@@ -552,8 +556,6 @@ def plot_fig5_part(epsilon_data, kappa_data, B, folder, part_number):
 
     ax_5.grid(True, zorder=1, alpha=0.3)
 
-    fig_5.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08, hspace=0.06)
-
     save_fig(
         fig_5,
         os.path.join(folder,"trajectoires"),
@@ -620,8 +622,6 @@ def plot_fig4(t, B, b, kappa_data, epsilon_data, inter_kappa, inter_epsilon, fol
     style_axis(ax_4_B_b, ylabel="Magnetic Amplitudes")
     style_axis(ax_4_stat, ylabel=stat_ylabel)
 
-    fig_4_B_b.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08, hspace=0.06)
-    fig_4_stat.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08, hspace=0.06)
     save_fig(fig_4_B_b, folder, "Fig_4_B_b")
     save_fig(fig_4_stat, folder, "Fig_4_stat")
 
@@ -781,7 +781,6 @@ def plot_B_omega(data, folder, name="Fig_B_omega", stddevs=None, data_analytique
 
     style_axis(ax, xlabel=r"$\Omega$", ylabel="B")
 
-    fig.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08, hspace=0.06)
     save_fig(fig, folder, name)
 
 def get_freq(minimas, tfin):
@@ -836,9 +835,6 @@ def big_simus():
                     for ax in [ax_3_B, ax_3_b]:
                         style_axis(ax, xlabel="t", legend_ncol=len(kappaeqs))
 
-                    fig_3_B.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08, hspace=0.06)
-                    fig_3_b.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08, hspace=0.06)
-
                     save_fig(fig_3_B, folder_fig_3, "Fig_3_B_large", dpi=300)
                     save_fig(fig_3_b, folder_fig_3, "Fig_3_b_small", dpi=300)
 
@@ -861,9 +857,6 @@ def big_simus():
 
                         for ax in [ax_r_B, ax_r_b]:
                             style_axis(ax, xlabel="t", legend_ncol=len(kappaeqs))
-
-                        fig_r_B.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08, hspace=0.06)
-                        fig_r_b.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08, hspace=0.06)
 
                         save_fig(fig_r_B, folder_runs, f"Fig_3_Big_run{r + 1:02d}", dpi=300)
                         save_fig(fig_r_b, folder_runs, f"Fig_3_b_run{r + 1:02d}", dpi=300)

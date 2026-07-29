@@ -75,8 +75,8 @@ class config:
                 simu_title="simu_"
             if tfin is None : 
                 if term=='short' : tfin=400
-                elif term=='mid' : tfin=1000
-                elif term=='long' : tfin=1000
+                elif term=='mid' : tfin=20000
+                elif term=='long' : tfin=20000
                 else:tfin=40
 
             if run_index is not None:
@@ -347,7 +347,8 @@ class config:
             )
 
         fig, ax = plt.subplots(
-            figsize=PLOT_STYLE["figsize"]
+            figsize=PLOT_STYLE["figsize"],
+            layout="constrained"
         )
 
         is_B = type in ["Bb", "B"]
@@ -597,7 +598,8 @@ class config:
                 fontsize=PLOT_STYLE["legend_fontsize"]
             )
 
-        fig.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08, hspace=0.06)
+        # layout="constrained" (fixé à la création de fig/ax ci-dessus) gère
+        # déjà l'ajustement automatique des marges.
 
         # ============================================================
         # Sauvegarde
@@ -684,7 +686,7 @@ class config:
         if len(groups) == 0:
             return  
 
-        fig, ax = plt.subplots(figsize=PLOT_STYLE["figsize"])
+        fig, ax = plt.subplots(figsize=PLOT_STYLE["figsize"], layout="constrained")
 
         pooled = np.concatenate(groups)
         q75, q25 = np.percentile(pooled, [75, 25])
@@ -732,8 +734,6 @@ class config:
                     fontsize=20,
                     color=_OKABE_ITO["vermillion"],
                     va="center", ha="center")
-
-        fig.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08, hspace=0.06)
 
         try:
             os.makedirs(self.folder, exist_ok=True)
