@@ -866,7 +866,7 @@ def big_simus():
                 if inter_kappa and (not inter_epsilon):
                     skumanich_folder = os.path.join(epsiloneq_folder, "skumanich")
 
-                    for kappaeq in tqdm([0.1,1], desc="skumanich", position=2, leave=False):
+                    for kappaeq in tqdm(kappaeqs, desc="skumanich", position=2, leave=False):
                         kappaeq_folder = os.path.join(skumanich_folder, "kappaeq=" + str(kappaeq))
                         kappaeq_mean_folder = os.path.join(kappaeq_folder, "mean")
                         kappaeq_100_folder = os.path.join(kappaeq_folder, "500")
