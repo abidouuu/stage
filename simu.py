@@ -75,8 +75,8 @@ class config:
                 simu_title="simu_"
             if tfin is None : 
                 if term=='short' : tfin=400
-                elif term=='mid' : tfin=20000
-                elif term=='long' : tfin=20000
+                elif term=='mid' : tfin=1000
+                elif term=='long' : tfin=1000
                 else:tfin=40
 
             if run_index is not None:
@@ -597,7 +597,7 @@ class config:
                 fontsize=PLOT_STYLE["legend_fontsize"]
             )
 
-        fig.tight_layout()
+        fig.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08, hspace=0.06)
 
         # ============================================================
         # Sauvegarde
@@ -733,7 +733,7 @@ class config:
                     color=_OKABE_ITO["vermillion"],
                     va="center", ha="center")
 
-        fig.tight_layout()
+        fig.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08, hspace=0.06)
 
         try:
             os.makedirs(self.folder, exist_ok=True)

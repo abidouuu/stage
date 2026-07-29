@@ -552,7 +552,7 @@ def plot_fig5_part(epsilon_data, kappa_data, B, folder, part_number):
 
     ax_5.grid(True, zorder=1, alpha=0.3)
 
-    fig_5.tight_layout()
+    fig_5.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08, hspace=0.06)
 
     save_fig(
         fig_5,
@@ -620,8 +620,8 @@ def plot_fig4(t, B, b, kappa_data, epsilon_data, inter_kappa, inter_epsilon, fol
     style_axis(ax_4_B_b, ylabel="Magnetic Amplitudes")
     style_axis(ax_4_stat, ylabel=stat_ylabel)
 
-    fig_4_B_b.tight_layout()
-    fig_4_stat.tight_layout()
+    fig_4_B_b.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08, hspace=0.06)
+    fig_4_stat.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08, hspace=0.06)
     save_fig(fig_4_B_b, folder, "Fig_4_B_b")
     save_fig(fig_4_stat, folder, "Fig_4_stat")
 
@@ -781,7 +781,7 @@ def plot_B_omega(data, folder, name="Fig_B_omega", stddevs=None, data_analytique
 
     style_axis(ax, xlabel=r"$\Omega$", ylabel="B")
 
-    fig.tight_layout()
+    fig.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08, hspace=0.06)
     save_fig(fig, folder, name)
 
 def get_freq(minimas, tfin):
@@ -836,8 +836,8 @@ def big_simus():
                     for ax in [ax_3_B, ax_3_b]:
                         style_axis(ax, xlabel="t", legend_ncol=len(kappaeqs))
 
-                    fig_3_B.tight_layout()
-                    fig_3_b.tight_layout()
+                    fig_3_B.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08, hspace=0.06)
+                    fig_3_b.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08, hspace=0.06)
 
                     save_fig(fig_3_B, folder_fig_3, "Fig_3_B_large", dpi=300)
                     save_fig(fig_3_b, folder_fig_3, "Fig_3_b_small", dpi=300)
@@ -862,8 +862,8 @@ def big_simus():
                         for ax in [ax_r_B, ax_r_b]:
                             style_axis(ax, xlabel="t", legend_ncol=len(kappaeqs))
 
-                        fig_r_B.tight_layout()
-                        fig_r_b.tight_layout()
+                        fig_r_B.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08, hspace=0.06)
+                        fig_r_b.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08, hspace=0.06)
 
                         save_fig(fig_r_B, folder_runs, f"Fig_3_Big_run{r + 1:02d}", dpi=300)
                         save_fig(fig_r_b, folder_runs, f"Fig_3_b_run{r + 1:02d}", dpi=300)
