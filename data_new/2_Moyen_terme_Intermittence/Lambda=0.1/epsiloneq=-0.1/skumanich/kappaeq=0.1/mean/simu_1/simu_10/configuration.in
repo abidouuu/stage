@@ -16,7 +16,7 @@ B0 = 3.2744171820641608
             term = long
 
             dt = 0.01
-            tfin = 1000
+            tfin = 20000
 
             Beq = 0
             beq = 1
