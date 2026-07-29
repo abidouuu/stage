@@ -43,43 +43,26 @@ def style_axis(
         legend=True,
         grid=True,
         xscale=None,
-        yscale=None):
+        yscale=None,
+        legend_ncol=1,
+        legend_loc="best"):
 
     if xlabel is not None:
-        ax.set_xlabel(
-            xlabel,
-            fontsize=PLOT_STYLE["label_fontsize"]
-        )
+        ax.set_xlabel(xlabel, fontsize=PLOT_STYLE["label_fontsize"])
 
     if ylabel is not None:
-        ax.set_ylabel(
-            ylabel,
-            fontsize=PLOT_STYLE["label_fontsize"]
-        )
+        ax.set_ylabel(ylabel, fontsize=PLOT_STYLE["label_fontsize"])
 
     if title is not None:
-        ax.set_title(
-            title,
-            fontsize=PLOT_STYLE["title_fontsize"]
-        )
+        ax.set_title(title, fontsize=PLOT_STYLE["title_fontsize"])
 
     ax.tick_params(
-        axis='both',
+        axis="both",
         labelsize=PLOT_STYLE["tick_fontsize"]
     )
 
     if grid:
-        ax.grid(
-            True,
-            alpha=PLOT_STYLE["grid_alpha"]
-        )
-
-    if legend:
-        handles, labels = ax.get_legend_handles_labels()
-        if handles:
-            ax.legend(
-                fontsize=PLOT_STYLE["legend_fontsize"]
-            )
+        ax.grid(True, alpha=PLOT_STYLE["grid_alpha"])
 
     if xscale is not None:
         ax.set_xscale(xscale)
@@ -87,7 +70,16 @@ def style_axis(
     if yscale is not None:
         ax.set_yscale(yscale)
 
+    if legend:
+        handles, labels = ax.get_legend_handles_labels()
+        if handles:
+            ax.legend(
+                fontsize=PLOT_STYLE["legend_fontsize"],
+                ncol=legend_ncol,
+                loc=legend_loc
+            )
 
+            
 def save_fig(fig, folder, filename,
              dpi=None,
              bbox_inches=None,
@@ -475,8 +467,8 @@ def court_terme(show_lambda=True):
 # -------------- FIGURES 3,4,5,6 : Moyen terme, intermittence ---------------------------------------------
 # ==========================================================================================================
 datadir_mid = os.path.join(datadir, "2_Moyen_terme_Intermittence")
-Lambdas = [0.1]
-epsiloneqs = [0.1]
+Lambdas = [0.1,0.01]
+epsiloneqs = [-0.1,0,0.1]
 kappaeqs = [0,0.1, 1]
 inter_list = [(True, False), (False, True), (True, True)]  # kappa, epsilon
 
