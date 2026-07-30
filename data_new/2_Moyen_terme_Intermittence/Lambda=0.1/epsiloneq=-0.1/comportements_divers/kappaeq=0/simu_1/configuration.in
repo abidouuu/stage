@@ -16,7 +16,7 @@ B0 = 0
             term = mid
 
             dt = 0.01
-            tfin = 20000
+            tfin = 150000
 
             Beq = 0
             beq = 1
