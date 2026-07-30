@@ -6,7 +6,7 @@ _OKABE_ITO = {
     "orange":        "#BB9138",
     "sky_blue":      "#508CAE",
     "bluish_green":  "#248D71",
-    "yellow":        "#F0E442",
+    "greener":        "#164C30",
     "blue":          "#235F82",
     "vermillion":    "#D55E00",
     "reddish_purple":"#CC79A7",

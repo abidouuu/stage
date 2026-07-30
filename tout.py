@@ -80,11 +80,27 @@ def style_axis(
     if legend:
         handles, labels = ax.get_legend_handles_labels()
         if handles:
-            ax.legend(
-                fontsize=PLOT_STYLE["legend_fontsize"],
-                ncol=legend_ncol,
-                loc=legend_loc
-            )
+            if isinstance(legend_loc, str) and legend_loc.startswith("outside"):
+                # Une légende "outside ..." doit être posée via fig.legend()
+                # (pas ax.legend()) pour que layout="constrained" lui
+                # réserve un vrai bloc d'espace dans la figure et ne la
+                # laisse jamais déborder/être coupée au moment du save,
+                # même si la figure est étroite ou la légende large.
+                ax.figure.legend(
+                    handles, labels,
+                    fontsize=PLOT_STYLE["legend_fontsize"],
+                    ncol=legend_ncol,
+                    loc=legend_loc,
+                    handlelength=1.5,
+                    columnspacing=1.0,
+                    handletextpad=0.5,
+                )
+            else:
+                ax.legend(
+                    fontsize=PLOT_STYLE["legend_fontsize"],
+                    ncol=legend_ncol,
+                    loc=legend_loc
+                )
 
 
 def save_fig(fig, folder, filename,
@@ -203,26 +219,8 @@ def find_empty_spot(ax, grid_size=25, margin=0.08, max_points_per_line=200, avoi
 datadir_short = os.path.join(datadir, "1_Court_terme_analytique")
 datadir_fig1 = os.path.join(datadir_short, "Figure_1_balaye_kappa")
 datadir_fig2 = os.path.join(datadir_short, "Figure_2_balaye_epsilon")
+
 def best_label_position(xs, curve, other_curves, n_candidates=300):
-    """
-    Find a good place to put a label on a curve.
-
-    Parameters
-    ----------
-    xs : array
-        x coordinates
-    curve : array
-        curve to label
-    other_curves : list of arrays
-        other curves already plotted
-    n_candidates : int
-        number of tested positions
-
-    Returns
-    -------
-    xlab, ylab, side
-    """
-
     xs = np.asarray(xs)
     curve = np.asarray(curve)
 
@@ -477,7 +475,11 @@ kappaeqs = [0,0.1, 1]
 inter_list = [(True, False), (False, True), (True, True)]  # kappa, epsilon
 
 
-def plot_fig5(epsilon_data, kappa_data, B, folder):
+def plot_fig5(data, folder):
+    t=data[:,0]
+    B=data[:,1]
+    kappa_data=data[:,3]
+    epsilon_data=data[:,4]
     n_parts = 10
     n = len(epsilon_data)
 
@@ -492,16 +494,17 @@ def plot_fig5(epsilon_data, kappa_data, B, folder):
             end = n
         else:
             end = (i + 1) * chunk_size
-
+        t_part = t[start::end]
+        t_start=t_part[0]
+        t_end=t_part[-1]
         eps = epsilon_data[start:end]
         kap = kappa_data[start:end]
         B_part = B[start:end]
 
-        plot_fig5_part(eps, kap, B_part, folder, i+1)
+        plot_fig5_part(eps, kap, B_part, folder, i+1,t_start,t_end)
 
-def plot_fig5_part(epsilon_data, kappa_data, B, folder, part_number):
-    """Plot one portion of Figure 5."""
 
+def plot_fig5_part(epsilon_data, kappa_data, B, folder, part_number,t_start,t_end):
     fig_5, ax_5 = new_figure()
     fig_5.patch.set_facecolor('white')
     ax_5.set_facecolor('white')
@@ -559,7 +562,7 @@ def plot_fig5_part(epsilon_data, kappa_data, B, folder, part_number):
     save_fig(
         fig_5,
         os.path.join(folder,"trajectoires"),
-        f"Fig_5_trajectoire_part_{part_number}",
+        f"[{t_start},{t_end}]",
         close=True
     )
 
@@ -687,10 +690,12 @@ def skumanich_500(folder, cfg :config, data_avg):
     B0=cfg.B0
     b0=cfg.b0
     kappaeq=cfg.kappaeq
+    kappa0=None
     for epsiloneq in tqdm(epsilons, desc="skumanich_500 inner", leave=False): 
         cfg_new= config(datadir=folder, term='mid',
                     epsiloneq=epsiloneq, Lambda=cfg.Lambda, kappaeq=kappaeq, run_index=1,
                     inter_kappa=True, inter_epsilon=True, B0=B0, b0=b0,
+                    kappa0=kappaeq if kappa0 is None else kappa0,
                     taukappa=cfg.taukappa, deltaepsilon=cfg.deltaepsilon, deltakappa=cfg.deltakappa,
                     tfin=cfg.tfin/10)
         data=cfg_new.run(save=False)
@@ -700,7 +705,7 @@ def skumanich_500(folder, cfg :config, data_avg):
         b_stddevs.append(np.std(data[:,2]))
         B0=data[-1,1]
         b0=data[-1,2]
-        kappaeq=data[-1,3]
+        kappa0=data[-1,3]
     data_new = np.column_stack((ts, B_means, b_means, kappas, epsilons, Omegas))
     stddev_new = np.column_stack((np.zeros_like(ts), B_stddevs, b_stddevs))
 
@@ -814,7 +819,7 @@ def big_simus():
                         (B_eq, b_eq) = cfg.get_eq()[0]
                         cfg.B0 = B_eq
                         cfg.b0 = b_eq
-                        data_list, data_avg, _ = cfg.run_and_avg(save_all=True, save_figs=True)
+                        data_list, data_avg, _ = cfg.run_and_avg(save_all=True, save_figs=True, n=3)
                         data_list_per_kappa.append(data_list)
                         minimas_total = []
                         for data in data_list:
@@ -833,7 +838,8 @@ def big_simus():
                         ax_3_b.plot(t, b, lw=PLOT_STYLE["linewidth"], label=r"$\kappa$=" + str(kappaeq))
 
                     for ax in [ax_3_B, ax_3_b]:
-                        style_axis(ax, xlabel="t", legend_ncol=len(kappaeqs))
+                        style_axis(ax, xlabel="t", legend_ncol=len(kappaeqs),
+                                   legend_loc="outside upper center")
 
                     save_fig(fig_3_B, folder_fig_3, "Fig_3_B_large", dpi=300)
                     save_fig(fig_3_b, folder_fig_3, "Fig_3_b_small", dpi=300)
@@ -856,7 +862,8 @@ def big_simus():
                             ax_r_b.plot(t, b, lw=PLOT_STYLE["linewidth"], label=r"$\kappa$=" + str(kappaeq))
 
                         for ax in [ax_r_B, ax_r_b]:
-                            style_axis(ax, xlabel="t", legend_ncol=len(kappaeqs))
+                            style_axis(ax, xlabel="t", legend_ncol=len(kappaeqs),
+                                       legend_loc="outside upper center")
 
                         save_fig(fig_r_B, folder_runs, f"Fig_3_Big_run{r + 1:02d}", dpi=300)
                         save_fig(fig_r_b, folder_runs, f"Fig_3_b_run{r + 1:02d}", dpi=300)
@@ -904,7 +911,7 @@ def big_simus():
                         kappaeq_folder = os.path.join(comportements_folder, "kappaeq=" + str(kappaeq))
                         minimas_list = []
                         cfg = None
-                        for i in range(3):
+                        for i in range(10):
                             cfg = config(datadir=kappaeq_folder, term='mid',
                                          epsiloneq=epsiloneq, Lambda=Lambda, kappaeq=kappaeq, run_index=i + 1,
                                          inter_kappa=inter_kappa, inter_epsilon=inter_epsilon)
@@ -920,9 +927,9 @@ def big_simus():
                             minimas = cfg.stat_analysis(data=data)
                             minimas_list.extend(minimas)
                             #plot_fft(t, kappa_data, r"$\kappa(t)$", cfg.folder, "kappa")
-                            plot_fig5(epsilon_data, kappa_data, B, cfg.folder)
+                            plot_fig5(data, cfg.folder)
                             plot_fig4(t, B, b, kappa_data, epsilon_data, inter_kappa, inter_epsilon, cfg.folder)
-                        freq=get_freq(minimas=minimas_list,tfin=cfg.tfin)
+                        freq=get_freq(minimas=minimas_list,tfin=10*cfg.tfin)
                         cfg.plot_histograms(minimas_list=minimas_list, differentfolder=kappaeq_folder, freq=freq)
     tqdm.write("Simulations d'intermittence : fin")
 

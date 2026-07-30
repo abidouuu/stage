@@ -58,6 +58,8 @@ dynamo::dynamo(int argc, char* argv[]) {
     inter_kappa = configfile.get<bool>("inter_kappa");
     inter_epsilon = configfile.get<bool>("inter_epsilon");
 
+    kappa0 = configfile.get<double>("kappa0");
+    epsilon0 = configfile.get<double>("epsilon0");
     term = configfile.get<string>("term");
 
     dt = configfile.get<double>("dt");
@@ -198,8 +200,8 @@ void dynamo::run(){
     B=B0;
     b=b0;
 
-    epsilon=epsiloneq;
-    kappa=kappaeq;
+    epsilon=epsilon0;
+    kappa=kappa0;
 
     Omega=2.14476105895272;
 

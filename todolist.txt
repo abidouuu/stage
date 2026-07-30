@@ -1,4 +1,0 @@
-Kappa dependency : 
-• Mettre aussi les graphes pour les simus individuelles
-• Mettre fréquence deux chiffres après la virgule
-• Faire les trois kappas

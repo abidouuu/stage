@@ -25,7 +25,8 @@ class dynamo{
 
         string term ; //"long", "mid", "short"
 
-        double B0, b0, sigmaB0, epsiloneq, kappaeq ; //conditions initiales
+        double B0, b0, sigmaB0, epsilon0, kappa0 ; //conditions initiales
+        double epsiloneq, kappaeq;
         double dt, t, tfin ; //paramètres de temps
         int step ; //nombre de pas de temps effectués
 

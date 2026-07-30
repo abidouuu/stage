@@ -31,6 +31,8 @@ class config:
         deltakappa=None, 
         inter_kappa=None,
         inter_epsilon=None, 
+        epsilon0=None,
+        kappa0=None,
         dt=0.01,
         tfin=None,
         run_index=None
@@ -71,6 +73,10 @@ class config:
                 inter_kappa=True
             if inter_epsilon is None : 
                 inter_epsilon=True
+            if epsilon0 is None : 
+                epsilon0=epsiloneq
+            if kappa0 is None :
+                kappa0=kappaeq
             if simu_title is None :
                 simu_title="simu_"
             if tfin is None : 
@@ -104,6 +110,9 @@ class config:
 
             self.inter_kappa=inter_kappa
             self.inter_epsilon=inter_epsilon
+
+            self.epsilon0=epsilon0
+            self.kappa0=kappa0
 
             self.dt=dt
             self.tfin=tfin
@@ -177,6 +186,9 @@ class config:
 
             inter_kappa = {'true' if self.inter_kappa else 'false'}
             inter_epsilon = {'true' if self.inter_epsilon else 'false'}
+
+            epsilon0 = {self.epsilon0}
+            kappa0 = {self.kappa0}
 
             term = {self.term}
 
@@ -369,9 +381,10 @@ class config:
             )
 
             if stddevs is not None : 
+                B_moins = [x if x > 0 else 0 for x in (B - B_stddev)]
                 ax.fill_between(
                     t[::fb_stride],
-                    (B - B_stddev)[::fb_stride],
+                    (B_moins)[::fb_stride],
                     (B + B_stddev)[::fb_stride],
                     color=_OKABE_ITO["sky_blue"]
                 )
@@ -386,9 +399,10 @@ class config:
             )
 
             if stddevs is not None : 
+                b_moins = [x if x > 0 else 0 for x in (b - b_stddevs)]
                 ax.fill_between(
                     t[::fb_stride],
-                    (b - b_stddevs)[::fb_stride],
+                    (b_moins)[::fb_stride],
                     (b + b_stddevs)[::fb_stride],
                     color=_OKABE_ITO["sky_orange"]
                 )
@@ -532,6 +546,9 @@ class config:
                 label=r"$\Omega(t)$"
             )
 
+            ax.set_xscale('log')
+            ax.set_yscale('log')
+
             ax.set_ylabel("Rotation speed")
 
         # ============================================================
@@ -559,8 +576,8 @@ class config:
                 label=r"$\varepsilon(t)$"
             )
 
-            ax_eps.set_ylabel("Dynamo number", color="green")
-            ax_eps.tick_params(axis='y', labelcolor="green")
+            ax_eps.set_ylabel("Dynamo number", color=_OKABE_ITO["greener"])
+            ax_eps.tick_params(axis='y', labelcolor=_OKABE_ITO["greener"])
 
         # ============================================================
         # Style global
@@ -718,7 +735,7 @@ class config:
 
         ax.set_xlabel(xlabel, fontsize=PLOT_STYLE["label_fontsize"])
         ax.set_ylabel(
-            "Probability density" if density else "Counts",
+            "Grand Minimas p.d.f" if density else "Grand Minima counts",
             fontsize=PLOT_STYLE["label_fontsize"]
         )
         ax.set_yscale("log")
