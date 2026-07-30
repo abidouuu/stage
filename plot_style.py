@@ -62,7 +62,7 @@ PLOT_STYLE = {
         _OKABE_ITO["reddish_purple"],
         _OKABE_ITO["orange"],
         _OKABE_ITO["sky_blue"],
-        _OKABE_ITO["yellow"],
+        _OKABE_ITO["greener"],
         _OKABE_ITO["black"],
     ],
 }
