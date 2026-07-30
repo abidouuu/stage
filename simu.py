@@ -81,8 +81,8 @@ class config:
                 simu_title="simu_"
             if tfin is None : 
                 if term=='short' : tfin=400
-                elif term=='mid' : tfin=5000 #150000
-                elif term=='long' : tfin=5000 #4e5
+                elif term=='mid' : tfin=150000
+                elif term=='long' : tfin=4e5
                 else:tfin=40
 
             if run_index is not None:

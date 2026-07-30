@@ -501,7 +501,7 @@ def plot_fig5(data, folder):
         kap = kappa_data[start:end]
         B_part = B[start:end]
 
-        plot_fig5_part(eps, kap, B_part, folder, i+1,t_start,t_end)
+        plot_fig5_part(eps, kap, B_part, folder, i+1,round(t_start),round(t_end))
 
 
 def plot_fig5_part(epsilon_data, kappa_data, B, folder, part_number,t_start,t_end):
@@ -622,8 +622,8 @@ def plot_fig4(t, B, b, kappa_data, epsilon_data, inter_kappa, inter_epsilon, fol
     else:
         stat_ylabel = "Stochastic parameters"
 
-    style_axis(ax_4_B_b, ylabel="Magnetic Amplitudes")
-    style_axis(ax_4_stat, ylabel=stat_ylabel)
+    style_axis(ax_4_B_b, xlabel=r"$\varepsilon \cdot t$", ylabel="Magnetic Amplitudes")
+    style_axis(ax_4_stat, xlabel=r"$\varepsilon \cdot t$", ylabel=stat_ylabel)
 
     save_fig(fig_4_B_b, folder, "Fig_4_B_b")
     save_fig(fig_4_stat, folder, "Fig_4_stat")
