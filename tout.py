@@ -469,7 +469,7 @@ def court_terme(show_lambda=True):
 # -------------- FIGURES 3,4,5,6 : Moyen terme, intermittence ---------------------------------------------
 # ==========================================================================================================
 datadir_mid = os.path.join(datadir, "2_Moyen_terme_Intermittence")
-Lambdas = [0.1,0.01]
+Lambdas = [0.1]
 epsiloneqs = [-0.1,0,0.1]
 kappaeqs = [0,0.1, 1]
 inter_list = [(True, False), (False, True), (True, True)]  # kappa, epsilon
