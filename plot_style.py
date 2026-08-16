@@ -43,7 +43,7 @@ PLOT_STYLE = {
 
     # ---- Output --------------------------------------------------------
     "dpi": 600,                     # raster fallback resolution
-    "save_formats": ["png"], # always keep a vector copy for print
+    "save_formats": ["png","eps"], # always keep a vector copy for print
 
     # ---- Semantic colors (Okabe-Ito) ----------------------------------------
     "color_B": _OKABE_ITO["blue"],

@@ -828,7 +828,7 @@ def big_simus():
                             minimas_total.extend(minimas)
                         freq=get_freq(minimas, cfg.tfin)
                         cfg.plot_histograms(minimas_list=minimas_total, differentfolder=minimas_folder,
-                                             name="kappaeq=" + str(kappaeq) + ".png", freq=freq)
+                                             name="kappaeq=" + str(kappaeq), freq=freq)
                         cfg.plot_time(data=data_avg, type='epsilon', differentfolder=folder_fig_3, name="stat_kappa="+str(kappaeq))
                         t = data_avg[:, 0]
                         B = data_avg[:, 1]
