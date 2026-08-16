@@ -469,7 +469,7 @@ def court_terme(show_lambda=True):
 # -------------- FIGURES 3,4,5,6 : Moyen terme, intermittence ---------------------------------------------
 # ==========================================================================================================
 datadir_mid = os.path.join(datadir, "2_Moyen_terme_Intermittence")
-Lambdas = [0.1]
+Lambdas = [0.1,0.01]
 epsiloneqs = [-0.1,0,0.1]
 kappaeqs = [0,0.1, 1]
 inter_list = [(True, False), (False, True), (True, True)]  # kappa, epsilon
@@ -495,8 +495,8 @@ def plot_fig5(data, folder):
         else:
             end = (i + 1) * chunk_size
         t_part = t[start::end]
-        t_start=t_part[0]
-        t_end=t_part[-1]
+        t_start=t_part[start]
+        t_end=t_part[end]
         eps = epsilon_data[start:end]
         kap = kappa_data[start:end]
         B_part = B[start:end]
@@ -781,7 +781,7 @@ def plot_B_omega(data, folder, name="Fig_B_omega", stddevs=None, data_analytique
             color="black",
             linestyle="--",
             lw=PLOT_STYLE["linewidth"],
-            label=r"$B(\Omega)$ analytique"
+            label=r"Analytical $B(\Omega)$"
         )
 
     style_axis(ax, xlabel=r"$\Omega$", ylabel="B")
@@ -863,8 +863,23 @@ def big_simus():
 
                         for ax in [ax_r_B, ax_r_b]:
                             style_axis(ax, xlabel="t", legend_ncol=len(kappaeqs),
-                                       legend_loc="outside upper center")
+                                       legend_loc="upper center")
 
+                            fig = ax.figure
+                            fig.canvas.draw()  # force a render so bbox sizes are known
+
+                            legend = ax.get_legend()
+                            if legend is not None:
+                                # get legend bbox in axes-fraction coordinates
+                                bbox = legend.get_window_extent(fig.canvas.get_renderer())
+                                bbox_axes = bbox.transformed(ax.transAxes.inverted())
+                                legend_height_frac = bbox_axes.height  # how much axes-height the legend occupies
+
+                                ymin, ymax = ax.get_ylim()
+                                data_range = ymax - ymin
+                                # push ymax up so legend height doesn't eat into the data area
+                                ax.set_ylim(ymin, ymax + legend_height_frac * data_range * 1.1)
+                                
                         save_fig(fig_r_B, folder_runs, f"Fig_3_Big_run{r + 1:02d}", dpi=300)
                         save_fig(fig_r_b, folder_runs, f"Fig_3_b_run{r + 1:02d}", dpi=300)
 
@@ -907,7 +922,7 @@ def big_simus():
 
                 if inter_kappa and inter_epsilon:
                     comportements_folder = os.path.join(epsiloneq_folder, "comportements_divers")
-                    for kappaeq in tqdm(kappaeqs, desc="intermittency", position=2, leave=False):
+                    for kappaeq in tqdm([0,0.1,0.3,1], desc="intermittency", position=2, leave=False):
                         kappaeq_folder = os.path.join(comportements_folder, "kappaeq=" + str(kappaeq))
                         minimas_list = []
                         cfg = None

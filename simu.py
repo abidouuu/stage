@@ -589,7 +589,7 @@ class config:
                         linewidth=PLOT_STYLE["linewidth"],
                         label="Sun")
         else : 
-            ax.set_xlabel(r"$\varepsilon \cdot t$")
+            ax.set_xlabel(r"$t$")
 
         ax.tick_params(
             axis="both",
@@ -626,40 +626,11 @@ class config:
 
         target_folder = self.folder if differentfolder is None else differentfolder
 
-        if name is None:
+        basename = f"plot_{type}" if name is None else name
 
-            savefile_png = os.path.join(
-                target_folder,
-                f"plot_{type}.png"
-            )
-
-            if eps:
-                savefile_eps = os.path.join(
-                    target_folder,
-                    f"plot_{type}.eps"
-                )
-
-        else:
-
-            savefile_png = os.path.join(
-                target_folder,
-                f"{name}.png"
-            )
-
-            if eps:
-                savefile_eps = os.path.join(
-                    target_folder,
-                    f"{name}.eps"
-                )
-
-        fig.savefig(
-            savefile_png,
-            dpi=PLOT_STYLE["dpi"]
-        )
-
-        if eps:
+        for ext in PLOT_STYLE["save_formats"]:
             fig.savefig(
-                savefile_eps,
+                os.path.join(target_folder, f"{basename}.{ext}"),
                 dpi=PLOT_STYLE["dpi"]
             )
 
