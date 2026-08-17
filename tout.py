@@ -494,9 +494,9 @@ def plot_fig5(data, folder):
             end = n
         else:
             end = (i + 1) * chunk_size
-        t_part = t[start::end]
-        t_start=t_part[start]
-        t_end=t_part[end]
+        t_part = t[start:end]
+        t_start = t_part[0]
+        t_end = t_part[-1]
         eps = epsilon_data[start:end]
         kap = kappa_data[start:end]
         B_part = B[start:end]
@@ -828,7 +828,7 @@ def big_simus():
                             minimas_total.extend(minimas)
                         freq=get_freq(minimas, cfg.tfin)
                         cfg.plot_histograms(minimas_list=minimas_total, differentfolder=minimas_folder,
-                                             name="kappaeq=" + str(kappaeq), freq=freq)
+                                             name="kappaeq=" + str(kappaeq) + ".png", freq=freq)
                         cfg.plot_time(data=data_avg, type='epsilon', differentfolder=folder_fig_3, name="stat_kappa="+str(kappaeq))
                         t = data_avg[:, 0]
                         B = data_avg[:, 1]
