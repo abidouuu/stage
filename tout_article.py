@@ -102,6 +102,54 @@ def style_axis(
                     loc=legend_loc
                 )
 
+def style_axis_legend_inside_top(ax, ncol=1):
+    """
+    Place la légende à l'intérieur du cadre, centrée en haut,
+    puis agrandit automatiquement la limite supérieure de y
+    pour que la légende ne recouvre pas les courbes.
+    """
+
+    handles, labels = ax.get_legend_handles_labels()
+
+    if not handles:
+        return
+
+    legend = ax.legend(
+        handles,
+        labels,
+        loc="upper center",
+        bbox_to_anchor=(0.5, 0.98),
+        ncol=ncol,
+        fontsize=PLOT_STYLE["legend_fontsize"],
+        handlelength=1.5,
+        columnspacing=1.0,
+        handletextpad=0.5,
+        frameon=True,
+        borderaxespad=0.0
+    )
+
+    # Force le calcul de la taille réelle de la légende
+    fig = ax.figure
+    fig.canvas.draw()
+
+    renderer = fig.canvas.get_renderer()
+
+    bbox = legend.get_window_extent(renderer)
+    bbox_axes = bbox.transformed(ax.transAxes.inverted())
+
+    # hauteur de la légende en coordonnées de l'axe
+    legend_height = bbox_axes.height
+
+    ymin, ymax = ax.get_ylim()
+    data_range = ymax - ymin
+
+    # On crée une zone vide en haut correspondant
+    # à la hauteur de la légende + marge
+    ax.set_ylim(
+        ymin,
+        ymax + 1.25 * legend_height * data_range
+    )
+
 
 def save_fig(fig, folder, filename,
              dpi=None,
@@ -838,8 +886,15 @@ def big_simus():
                         ax_3_b.plot(t, b, lw=PLOT_STYLE["linewidth"], label=r"$\kappa$=" + str(kappaeq))
 
                     for ax in [ax_3_B, ax_3_b]:
-                        style_axis(ax, xlabel="t", legend_ncol=len(kappaeqs),
-                                   legend_loc="outside upper center")
+                        style_axis(
+                            ax,
+                            xlabel="t",
+                            legend=False
+                        )
+                        style_axis_legend_inside_top(
+                            ax,
+                            ncol=len(kappaeqs)
+                        )
 
                     save_fig(fig_3_B, folder_fig_3, "Fig_3_B_large", dpi=300)
                     save_fig(fig_3_b, folder_fig_3, "Fig_3_b_small", dpi=300)
@@ -862,23 +917,16 @@ def big_simus():
                             ax_r_b.plot(t, b, lw=PLOT_STYLE["linewidth"], label=r"$\kappa$=" + str(kappaeq))
 
                         for ax in [ax_r_B, ax_r_b]:
-                            style_axis(ax, xlabel="t", legend_ncol=len(kappaeqs),
-                                       legend_loc="upper center")
+                            style_axis(
+                                ax,
+                                xlabel="t",
+                                legend=False
+                            )
 
-                            fig = ax.figure
-                            fig.canvas.draw()  # force a render so bbox sizes are known
-
-                            legend = ax.get_legend()
-                            if legend is not None:
-                                # get legend bbox in axes-fraction coordinates
-                                bbox = legend.get_window_extent(fig.canvas.get_renderer())
-                                bbox_axes = bbox.transformed(ax.transAxes.inverted())
-                                legend_height_frac = bbox_axes.height  # how much axes-height the legend occupies
-
-                                ymin, ymax = ax.get_ylim()
-                                data_range = ymax - ymin
-                                # push ymax up so legend height doesn't eat into the data area
-                                ax.set_ylim(ymin, ymax + legend_height_frac * data_range * 1.1)
+                            style_axis_legend_inside_top(
+                                ax,
+                                ncol=len(kappaeqs)
+                            )
                                 
                         save_fig(fig_r_B, folder_runs, f"Fig_3_Big_run{r + 1:02d}", dpi=300)
                         save_fig(fig_r_b, folder_runs, f"Fig_3_b_run{r + 1:02d}", dpi=300)
@@ -1029,23 +1077,19 @@ def fig_kappa_dependency_selection():
         ax_r_b.plot(t, b, lw=PLOT_STYLE["linewidth"], label=r"$\kappa$=" + str(kappaeq))
 
     for ax in [ax_r_B, ax_r_b]:
-        style_axis(ax, xlabel="t", legend_ncol=len(kappaeqs), legend_loc="upper center")
+        style_axis(
+            ax,
+            xlabel="t",
+            legend=False
+        )
 
-        fig = ax.figure
-        fig.canvas.draw()  # force un render pour connaitre la taille de la legende
+        style_axis_legend_inside_top(
+            ax,
+            ncol=len(kappaeqs)
+        )
 
-        legend = ax.get_legend()
-        if legend is not None:
-            bbox = legend.get_window_extent(fig.canvas.get_renderer())
-            bbox_axes = bbox.transformed(ax.transAxes.inverted())
-            legend_height_frac = bbox_axes.height
-
-            ymin, ymax = ax.get_ylim()
-            data_range = ymax - ymin
-            ax.set_ylim(ymin, ymax + legend_height_frac * data_range * 1.1)
-
-    save_fig(fig_r_B, folder_runs, f"Fig_3_Big_run{r_wanted + 1:02d}", dpi=300)
-    save_fig(fig_r_b, folder_runs, f"Fig_3_b_run{r_wanted + 1:02d}", dpi=300)
+        save_fig(fig_r_B, folder_runs, f"Fig_3_Big_run{r_wanted + 1:02d}", dpi=300)
+        save_fig(fig_r_b, folder_runs, f"Fig_3_b_run{r_wanted + 1:02d}", dpi=300)
 
 
 def fig_comportements_divers_selection():
@@ -1062,9 +1106,9 @@ def fig_comportements_divers_selection():
 
     # (epsiloneq, kappaeq) -> (indice de simu a tracer en Fig_4, tracer aussi Fig_5 ?)
     special_simu = {
-        (-0.1, 0.1): (3, True),
-        (0, 1): (7, False),
-        (0.1, 1): (5, False),
+        (-0.1, 0): (3, True),
+        (0, 0.1): (7, False),
+        (0.1, 0.1): (5, False),
     }
 
     # + les combinaisons kappaeq=0.3 (nouvelles), pour lesquelles seul
@@ -1094,6 +1138,7 @@ def fig_comportements_divers_selection():
             minimas = cfg.stat_analysis(data=data)
             minimas_list.extend(minimas)
 
+            '''
             if wanted_idx is not None and (i + 1) == wanted_idx:
                 t = data[:, 0]
                 B = data[:, 1]
@@ -1103,7 +1148,7 @@ def fig_comportements_divers_selection():
                 plot_fig4(t, B, b, kappa_data, epsilon_data, inter_kappa, inter_epsilon, cfg.folder)
                 if wanted_fig5:
                     _fig5_last_part_only(data, cfg.folder)
-
+            '''
         freq = get_freq(minimas=minimas_list, tfin=10 * cfg.tfin)
         cfg.plot_histograms(minimas_list=minimas_list, differentfolder=kappaeq_folder, freq=freq)
 
@@ -1163,9 +1208,9 @@ def figures_article():
     fig_comportements_divers_selection()
     tqdm.write("comportements_divers (selection) : fin")
 
-    tqdm.write("skumanich (selection) : debut")
+    '''tqdm.write("skumanich (selection) : debut")
     fig_skumanich_selection()
-    tqdm.write("skumanich (selection) : fin")
+    tqdm.write("skumanich (selection) : fin")'''
 
 
 if __name__ == "__main__":
