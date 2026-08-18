@@ -17,7 +17,7 @@ logging.getLogger('matplotlib.backends.backend_ps').setLevel(logging.ERROR)
 from plot_style import PLOT_STYLE, _OKABE_ITO
 
 workdir = os.path.dirname(os.path.abspath(__file__))
-datadir = os.path.join(workdir, "data_new")
+datadir = os.path.join(workdir, "data_new_2")
 
 
 # ==========================================================================================================
@@ -1196,9 +1196,9 @@ def figures_article():
     l'article, en .png et .eps, en reutilisant les donnees deja simulees
     quand elles existent (seul kappaeq=0.3 dans comportements_divers est un
     nouveau cas et sera donc resimule)."""
-    tqdm.write("Balayages (analytique, toutes les figures) : debut")
+    '''tqdm.write("Balayages (analytique, toutes les figures) : debut")
     court_terme()
-    tqdm.write("Balayages (analytique, toutes les figures) : fin")
+    tqdm.write("Balayages (analytique, toutes les figures) : fin")'''
 
     tqdm.write("kappa_dependency (selection) : debut")
     fig_kappa_dependency_selection()
