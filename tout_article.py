@@ -17,7 +17,7 @@ logging.getLogger('matplotlib.backends.backend_ps').setLevel(logging.ERROR)
 from plot_style import PLOT_STYLE, _OKABE_ITO
 
 workdir = os.path.dirname(os.path.abspath(__file__))
-datadir = os.path.join(workdir, "data_new_2")
+datadir = os.path.join(workdir, "data_new")
 
 
 # ==========================================================================================================
