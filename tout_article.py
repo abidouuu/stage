@@ -948,6 +948,225 @@ def big_simus():
                         cfg.plot_histograms(minimas_list=minimas_list, differentfolder=kappaeq_folder, freq=freq)
     tqdm.write("Simulations d'intermittence : fin")
 
-if __name__ == "__main__":
+
+# ==========================================================================================================
+# -------------- SELECTION DE FIGURES POUR L'ARTICLE (.png + .eps uniquement) ------------------------------
+# ==========================================================================================================
+# But : ajouter, dans un dossier de resultats deja rempli (fichiers .txt et
+# configuration.in existants, figures deja supprimees), UNIQUEMENT les
+# figures listees ci-dessous, en .png et .eps (cf.
+# plot_style.PLOT_STYLE["save_formats"]).
+#
+# On reconstruit systematiquement les memes cfg / mêmes chemins de dossiers
+# que big_simus(), pour que cfg.run()/cfg.run_and_avg() retrouvent les
+# donnees deja simulees sur disque (configuration.in identique => pas de
+# resimulation) et se contentent de relire output.txt. Le seul cas qui sera
+# reellement resimule est kappaeq=0.3 dans comportements_divers, puisque
+# cette valeur n'existait pas avant.
+#
+# A la difference de big_simus(), on evite ici tout appel de fonction qui
+# produirait des figures NON demandees (plot_time des runs individuels,
+# skumanich_500, Fig_B_omega_500, plot_fig4/plot_fig5 sur les simus non
+# selectionnees, etc.), pour ne pas remplir le dossier de .eps inutiles.
+
+def _fig5_last_part_only(data, folder):
+    """Identique a plot_fig5(), mais ne trace/sauvegarde que la derniere des
+    10 subdivisions temporelles (pour tfin=150000 : t in [135000, 150000])."""
+    t = data[:, 0]
+    B = data[:, 1]
+    kappa_data = data[:, 3]
+    epsilon_data = data[:, 4]
+    n_parts = 10
+    n = len(epsilon_data)
+    chunk_size = n // n_parts
+
+    i = n_parts - 1  # derniere subdivision uniquement
+    start = i * chunk_size
+    end = n
+    t_part = t[start:end]
+    t_start = t_part[0]
+    t_end = t_part[-1]
+    eps = epsilon_data[start:end]
+    kap = kappa_data[start:end]
+    B_part = B[start:end]
+
+    plot_fig5_part(eps, kap, B_part, folder, i + 1, round(t_start), round(t_end))
+
+
+def fig_kappa_dependency_selection():
+    """kappa_dependency : Lambda=0.1, epsiloneq=0, simus_individuelles,
+    run02 (figures B et b superposant les 3 courbes de kappa pour la
+    2e simu individuelle, r_wanted=1 en index 0-based)."""
+    Lambda = 0.1
+    epsiloneq = 0
+    Lambda_folder = os.path.join(datadir_mid, "Lambda=" + str(Lambda))
+    epsiloneq_folder = os.path.join(Lambda_folder, "epsiloneq=" + str(epsiloneq))
+    folder_fig_3 = os.path.join(epsiloneq_folder, "kappa_dependency")
+    folder_runs = os.path.join(folder_fig_3, "simus_individuelles")
+
+    r_wanted = 1  # index 0-based -> "run02"
+
+    data_list_per_kappa = []
+    for run_idx, kappaeq in enumerate(kappaeqs):
+        cfg = config(datadir=folder_fig_3, term='mid',
+                     epsiloneq=epsiloneq, Lambda=Lambda, kappaeq=kappaeq,
+                     inter_kappa=False, inter_epsilon=True,
+                     run_index=run_idx + 1)
+        (B_eq, b_eq) = cfg.get_eq()[0]
+        cfg.B0 = B_eq
+        cfg.b0 = b_eq
+        data_list, _, _ = cfg.run_and_avg(save_all=True, save_figs=False, n=3)
+        data_list_per_kappa.append(data_list)
+
+    fig_r_B, ax_r_B = new_figure()
+    fig_r_b, ax_r_b = new_figure()
+    for k, kappaeq in enumerate(kappaeqs):
+        data_r = data_list_per_kappa[k][r_wanted]
+        t = data_r[:, 0]
+        B = data_r[:, 1]
+        b = data_r[:, 2]
+        ax_r_B.plot(t, B, lw=PLOT_STYLE["linewidth"], label=r"$\kappa$=" + str(kappaeq))
+        ax_r_b.plot(t, b, lw=PLOT_STYLE["linewidth"], label=r"$\kappa$=" + str(kappaeq))
+
+    for ax in [ax_r_B, ax_r_b]:
+        style_axis(ax, xlabel="t", legend_ncol=len(kappaeqs), legend_loc="upper center")
+
+        fig = ax.figure
+        fig.canvas.draw()  # force un render pour connaitre la taille de la legende
+
+        legend = ax.get_legend()
+        if legend is not None:
+            bbox = legend.get_window_extent(fig.canvas.get_renderer())
+            bbox_axes = bbox.transformed(ax.transAxes.inverted())
+            legend_height_frac = bbox_axes.height
+
+            ymin, ymax = ax.get_ylim()
+            data_range = ymax - ymin
+            ax.set_ylim(ymin, ymax + legend_height_frac * data_range * 1.1)
+
+    save_fig(fig_r_B, folder_runs, f"Fig_3_Big_run{r_wanted + 1:02d}", dpi=300)
+    save_fig(fig_r_b, folder_runs, f"Fig_3_b_run{r_wanted + 1:02d}", dpi=300)
+
+
+def fig_comportements_divers_selection():
+    """comportements_divers (Lambda=0.1) :
+      - Fig_4 (B_b, stat) pour les 3 simulations specifiques demandees ;
+      - Fig_5 (trajectoire), derniere subdivision seulement, uniquement
+        pour epsiloneq=-0.1, kappaeq=0.1, simu_3 ;
+      - plot_minimas pour (epsiloneq, kappaeq) in
+        {(-0.1, 0.1), (0, 1), (0.1, 1)} (donnees deja existantes, pas de
+        resimulation) et pour kappaeq=0.3 avec les trois epsiloneq
+        (nouveau -> resimule, sans les graphiques temporels Fig_4/Fig_5)."""
+    Lambda = 0.1
+    inter_kappa, inter_epsilon = True, True
+
+    # (epsiloneq, kappaeq) -> (indice de simu a tracer en Fig_4, tracer aussi Fig_5 ?)
+    special_simu = {
+        (-0.1, 0.1): (3, True),
+        (0, 1): (7, False),
+        (0.1, 1): (5, False),
+    }
+
+    # + les combinaisons kappaeq=0.3 (nouvelles), pour lesquelles seul
+    # plot_minimas est demande, sans Fig_4/Fig_5.
+    combos = list(special_simu.keys()) + [(-0.1, 0.3), (0, 0.3), (0.1, 0.3)]
+
+    for (epsiloneq, kappaeq) in combos:
+        epsiloneq_folder = os.path.join(datadir_mid, "Lambda=" + str(Lambda),
+                                         "epsiloneq=" + str(epsiloneq))
+        comportements_folder = os.path.join(epsiloneq_folder, "comportements_divers")
+        kappaeq_folder = os.path.join(comportements_folder, "kappaeq=" + str(kappaeq))
+
+        wanted = special_simu.get((epsiloneq, kappaeq))
+        wanted_idx = wanted[0] if wanted else None
+        wanted_fig5 = wanted[1] if wanted else False
+
+        minimas_list = []
+        cfg = None
+        for i in range(10):
+            cfg = config(datadir=kappaeq_folder, term='mid',
+                         epsiloneq=epsiloneq, Lambda=Lambda, kappaeq=kappaeq, run_index=i + 1,
+                         inter_kappa=inter_kappa, inter_epsilon=inter_epsilon)
+            (B_eq, b_eq) = cfg.get_eq()[0]
+            cfg.B0 = B_eq
+            cfg.b0 = b_eq
+            data = cfg.run(save=True)
+            minimas = cfg.stat_analysis(data=data)
+            minimas_list.extend(minimas)
+
+            if wanted_idx is not None and (i + 1) == wanted_idx:
+                t = data[:, 0]
+                B = data[:, 1]
+                b = data[:, 2]
+                kappa_data = data[:, 3]
+                epsilon_data = data[:, 4]
+                plot_fig4(t, B, b, kappa_data, epsilon_data, inter_kappa, inter_epsilon, cfg.folder)
+                if wanted_fig5:
+                    _fig5_last_part_only(data, cfg.folder)
+
+        freq = get_freq(minimas=minimas_list, tfin=10 * cfg.tfin)
+        cfg.plot_histograms(minimas_list=minimas_list, differentfolder=kappaeq_folder, freq=freq)
+
+
+def fig_skumanich_selection():
+    """skumanich : uniquement les sous-dossiers 'mean' et 'analytique' (pas
+    de '500'), pour les trois couples (epsiloneq, kappaeq) demandes."""
+    Lambda = 0.1
+    inter_kappa, inter_epsilon = True, False
+
+    pairs = [(-0.1, 0.1), (0, 0.1), (0.1, 1)]
+
+    for (epsiloneq, kappaeq) in pairs:
+        epsiloneq_folder = os.path.join(datadir_mid, "Lambda=" + str(Lambda),
+                                         "epsiloneq=" + str(epsiloneq))
+        skumanich_folder = os.path.join(epsiloneq_folder, "skumanich")
+        kappaeq_folder = os.path.join(skumanich_folder, "kappaeq=" + str(kappaeq))
+        kappaeq_mean_folder = os.path.join(kappaeq_folder, "mean")
+        kappaeq_analytique_folder = os.path.join(kappaeq_folder, "analytique")
+
+        try:
+            cfg = config(datadir=kappaeq_mean_folder, term='long',
+                         epsiloneq=epsiloneq, Lambda=Lambda, kappaeq=kappaeq, run_index=1,
+                         inter_kappa=inter_kappa, inter_epsilon=inter_epsilon)
+            (B_eq, b_eq) = cfg.get_eq(skuma=True)[0]
+            cfg.B0 = B_eq
+            cfg.b0 = b_eq
+            _, data_avg, stddevs = cfg.run_and_avg(save_all=True, save_figs=False)
+            for type in ['Bb', 'kappa', 'epsilon', 'Omega']:
+                cfg.plot_time(data_avg, type=type, show=False, stddevs=stddevs,
+                               differentfolder=kappaeq_mean_folder)
+            data_analytique = skumanich_analytique(folder=kappaeq_analytique_folder, cfg=cfg, data_avg=data_avg)
+            cfg.plot_time(data=data_analytique, type="Bb", show=False,
+                           differentfolder=kappaeq_analytique_folder, analytique=True)
+            plot_B_omega(data_avg, kappaeq_folder, name="Fig_B_omega_mean",
+                         stddevs=stddevs, data_analytique=data_analytique)
+        except Exception as e:
+            tqdm.write(f"[skumanich] echec pour Lambda={Lambda}, epsiloneq={epsiloneq}, "
+                       f"kappaeq={kappaeq} : {e}")
+            continue
+
+
+def figures_article():
+    """Point d'entree unique : ne genere QUE les figures selectionnees pour
+    l'article, en .png et .eps, en reutilisant les donnees deja simulees
+    quand elles existent (seul kappaeq=0.3 dans comportements_divers est un
+    nouveau cas et sera donc resimule)."""
+    tqdm.write("Balayages (analytique, toutes les figures) : debut")
     court_terme()
-    big_simus()
+    tqdm.write("Balayages (analytique, toutes les figures) : fin")
+
+    tqdm.write("kappa_dependency (selection) : debut")
+    fig_kappa_dependency_selection()
+    tqdm.write("kappa_dependency (selection) : fin")
+
+    tqdm.write("comportements_divers (selection) : debut")
+    fig_comportements_divers_selection()
+    tqdm.write("comportements_divers (selection) : fin")
+
+    tqdm.write("skumanich (selection) : debut")
+    fig_skumanich_selection()
+    tqdm.write("skumanich (selection) : fin")
+
+
+if __name__ == "__main__":
+    figures_article()
