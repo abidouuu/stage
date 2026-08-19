@@ -1190,10 +1190,10 @@ def fig_skumanich_selection():
             cfg.B0 = B_eq
             cfg.b0 = b_eq
             _, data_avg, stddevs = cfg.run_and_avg(save_all=True, save_figs=False)
-            for type in ['Bb', 'kappa', 'epsilon', 'Omega']:
-                cfg.plot_time(data_avg, type=type, show=False, stddevs=stddevs, differentfolder=kappaeq_mean_folder)
+            #for type in ['Bb', 'kappa', 'epsilon', 'Omega']:
+                #cfg.plot_time(data_avg, type=type, show=False, stddevs=stddevs, differentfolder=kappaeq_mean_folder)
             data_analytique = skumanich_analytique(folder=kappaeq_analytique_folder, cfg=cfg, data_avg=data_avg)
-            cfg.plot_time(data=data_analytique, type="Bb", show=False, differentfolder=kappaeq_analytique_folder, analytique=True)
+            #cfg.plot_time(data=data_analytique, type="Bb", show=False, differentfolder=kappaeq_analytique_folder, analytique=True)
             plot_B_omega(data_avg, kappaeq_folder, name="Fig_B_omega_mean",
                          stddevs=stddevs, data_analytique=data_analytique)
         except Exception as e:
@@ -1208,7 +1208,7 @@ def figures_article():
     quand elles existent (seul kappaeq=0.3 dans comportements_divers est un
     nouveau cas et sera donc resimule)."""
 
-    tqdm.write("Balayages (analytique, toutes les figures) : debut")
+    """tqdm.write("Balayages (analytique, toutes les figures) : debut")
     court_terme()
     tqdm.write("Balayages (analytique, toutes les figures) : fin")
 
@@ -1218,7 +1218,7 @@ def figures_article():
 
     tqdm.write("comportements_divers (selection) : debut")
     fig_comportements_divers_selection()
-    tqdm.write("comportements_divers (selection) : fin")
+    tqdm.write("comportements_divers (selection) : fin")"""
 
     tqdm.write("skumanich (selection) : debut")
     fig_skumanich_selection()
