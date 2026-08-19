@@ -801,14 +801,9 @@ def skumanich_analytique(folder, cfg :config, data_avg):
     return data_new
 
 def plot_B_omega(data, folder, name="Fig_B_omega", stddevs=None, data_analytique=None):
-    """Trace B en fonction d'Omega (au lieu de B(t)).
-    Fonctionne aussi bien avec les données skumanich_mean (t,B,b,kappa,epsilon,Omega,
-    6 colonnes) qu'avec celles de skumanich_500 (même ordre de colonnes).
-    Si data_analytique est fourni, superpose la courbe analytique en pointillés noirs."""
     Omega = data[:, 5]
     B = data[:, 1]
 
-    # on trie par Omega croissant pour avoir une courbe/bande propre
     order = np.argsort(Omega)
     Omega_sorted = Omega[order]
     B_sorted = B[order]
@@ -819,7 +814,8 @@ def plot_B_omega(data, folder, name="Fig_B_omega", stddevs=None, data_analytique
         Omega_sorted, B_sorted,
         color=PLOT_STYLE["color_B"],
         lw=PLOT_STYLE["linewidth"],
-        label=r"$B(\Omega)$"
+        label=r"$B(\Omega)$",
+        rasterized=True,          # <-- AJOUT
     )
 
     if stddevs is not None:
@@ -829,7 +825,8 @@ def plot_B_omega(data, folder, name="Fig_B_omega", stddevs=None, data_analytique
             B_sorted - B_stddev,
             B_sorted + B_stddev,
             color=_OKABE_ITO["sky_blue"],
-            alpha=0.25
+            alpha=0.25,
+            rasterized=True,       # <-- AJOUT
         )
 
     if data_analytique is not None:
@@ -842,11 +839,12 @@ def plot_B_omega(data, folder, name="Fig_B_omega", stddevs=None, data_analytique
             linestyle="--",
             lw=PLOT_STYLE["linewidth"],
             label=r"Analytical $B(\Omega)$"
+            # celle-ci reste vectorielle : c'est la courbe analytique, peu de points
         )
 
     style_axis(ax, xlabel=r"$\Omega$", ylabel="B")
-
     save_fig(fig, folder, name)
+
 
 def get_freq(minimas, tfin):
     # minimas is a list of (t_center, duree) tuples, one per detected minimum.
@@ -1121,6 +1119,9 @@ def fig_comportements_divers_selection():
         (-0.1, 0): (3, True),
         (0, 0.1): (7, False),
         (0.1, 0.1): (5, False),
+        (-0.1, 0.1): (3, True),
+        (0, 1): (7, False),
+        (0.1,1): (5, False),
     }
 
     # + les combinaisons kappaeq=0.3 (nouvelles), pour lesquelles seul
@@ -1150,7 +1151,7 @@ def fig_comportements_divers_selection():
             minimas = cfg.stat_analysis(data=data)
             minimas_list.extend(minimas)
 
-            '''
+            
             if wanted_idx is not None and (i + 1) == wanted_idx:
                 t = data[:, 0]
                 B = data[:, 1]
@@ -1159,8 +1160,8 @@ def fig_comportements_divers_selection():
                 epsilon_data = data[:, 4]
                 plot_fig4(t, B, b, kappa_data, epsilon_data, inter_kappa, inter_epsilon, cfg.folder)
                 if wanted_fig5:
-                    _fig5_last_part_only(data, cfg.folder)
-            '''
+                   _fig5_last_part_only(data, cfg.folder)
+
         freq = get_freq(minimas=minimas_list, tfin=10 * cfg.tfin)
         cfg.plot_histograms(minimas_list=minimas_list, differentfolder=kappaeq_folder, freq=freq)
 
@@ -1189,10 +1190,10 @@ def fig_skumanich_selection():
             cfg.B0 = B_eq
             cfg.b0 = b_eq
             _, data_avg, stddevs = cfg.run_and_avg(save_all=True, save_figs=False)
-            #for type in ['Bb', 'kappa', 'epsilon', 'Omega']:
-                #cfg.plot_time(data_avg, type=type, show=False, stddevs=stddevs, differentfolder=kappaeq_mean_folder)
+            for type in ['Bb', 'kappa', 'epsilon', 'Omega']:
+                cfg.plot_time(data_avg, type=type, show=False, stddevs=stddevs, differentfolder=kappaeq_mean_folder)
             data_analytique = skumanich_analytique(folder=kappaeq_analytique_folder, cfg=cfg, data_avg=data_avg)
-            #cfg.plot_time(data=data_analytique, type="Bb", show=False, differentfolder=kappaeq_analytique_folder, analytique=True)
+            cfg.plot_time(data=data_analytique, type="Bb", show=False, differentfolder=kappaeq_analytique_folder, analytique=True)
             plot_B_omega(data_avg, kappaeq_folder, name="Fig_B_omega_mean",
                          stddevs=stddevs, data_analytique=data_analytique)
         except Exception as e:
