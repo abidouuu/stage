@@ -150,18 +150,6 @@ def style_axis_legend_inside_top(ax, ncol=1):
             ymax + 1.25 * legend_height * data_range
         )
 
-    legend_width = bbox_axes.width
-
-    xmin, xmax = ax.get_xlim()
-    data_range_x = xmax - xmin
-
-    extra_x = 1.25 * legend_width * data_range_x
-
-    ax.set_xlim(
-        xmin - extra_x / 2,
-        xmax + extra_x / 2
-    )
-
 
 def save_fig(fig, folder, filename,
              dpi=None,
@@ -815,18 +803,17 @@ def plot_B_omega(data, folder, name="Fig_B_omega", stddevs=None, data_analytique
         color=PLOT_STYLE["color_B"],
         lw=PLOT_STYLE["linewidth"],
         label=r"$B(\Omega)$",
-        rasterized=True,          # <-- AJOUT
     )
 
     if stddevs is not None:
         B_stddev = stddevs[:, 1][order]
+        B_moins = [x if x > 0 else 0 for x in (B - B_stddev)]
         ax.fill_between(
             Omega_sorted,
-            B_sorted - B_stddev,
+            B_moins,
             B_sorted + B_stddev,
             color=_OKABE_ITO["sky_blue"],
             alpha=0.25,
-            rasterized=True,       # <-- AJOUT
         )
 
     if data_analytique is not None:
@@ -1210,13 +1197,13 @@ def figures_article():
 
     """tqdm.write("Balayages (analytique, toutes les figures) : debut")
     court_terme()
-    tqdm.write("Balayages (analytique, toutes les figures) : fin")
+    tqdm.write("Balayages (analytique, toutes les figures) : fin")"""
 
     tqdm.write("kappa_dependency (selection) : debut")
     fig_kappa_dependency_selection()
     tqdm.write("kappa_dependency (selection) : fin")
 
-    tqdm.write("comportements_divers (selection) : debut")
+    """tqdm.write("comportements_divers (selection) : debut")
     fig_comportements_divers_selection()
     tqdm.write("comportements_divers (selection) : fin")"""
 
