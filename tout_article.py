@@ -817,7 +817,7 @@ def plot_B_omega(data, folder, name="Fig_B_omega", stddevs=None, data_analytique
 
     if stddevs is not None:
         B_stddev = stddevs[:, 1][order]
-        B_moins = [x if x > 0 else 0 for x in (B - B_stddev)]
+        B_moins = [x if x > 0 else 0 for x in (B_sorted - B_stddev)]
         ax.fill_between(
             Omega_sorted,
             B_moins,
@@ -1115,17 +1115,12 @@ def fig_comportements_divers_selection():
 
     # (epsiloneq, kappaeq) -> (indice de simu a tracer en Fig_4, tracer aussi Fig_5 ?)
     special_simu = {
-        (-0.1, 0): (3, True),
-        (0, 0.1): (7, False),
-        (0.1, 0.1): (5, False),
         (-0.1, 0.1): (3, True),
-        (0, 1): (7, False),
-        (0.1,1): (5, False),
     }
 
     # + les combinaisons kappaeq=0.3 (nouvelles), pour lesquelles seul
     # plot_minimas est demande, sans Fig_4/Fig_5.
-    combos = list(special_simu.keys()) + [(-0.1, 0.3), (0, 0.3), (0.1, 0.3)]
+    combos = list(special_simu.keys())
 
     for (epsiloneq, kappaeq) in combos:
         epsiloneq_folder = os.path.join(datadir_mid, "Lambda=" + str(Lambda),
@@ -1211,13 +1206,13 @@ def figures_article():
     court_terme()
     tqdm.write("Balayages (analytique, toutes les figures) : fin")"""
 
-    tqdm.write("kappa_dependency (selection) : debut")
+    """tqdm.write("kappa_dependency (selection) : debut")
     fig_kappa_dependency_selection()
-    tqdm.write("kappa_dependency (selection) : fin")
+    tqdm.write("kappa_dependency (selection) : fin")"""
 
-    """tqdm.write("comportements_divers (selection) : debut")
+    tqdm.write("comportements_divers (selection) : debut")
     fig_comportements_divers_selection()
-    tqdm.write("comportements_divers (selection) : fin")"""
+    tqdm.write("comportements_divers (selection) : fin")
 
     tqdm.write("skumanich (selection) : debut")
     fig_skumanich_selection()
