@@ -798,11 +798,21 @@ def plot_B_omega(data, folder, name="Fig_B_omega", stddevs=None, data_analytique
 
     fig, ax = new_figure()
 
+    # rasterized=True : cette courbe vient d'une simu 'long' et contient
+    # énormément de points. La tracer en vectoriel (comme avant) génère un
+    # chemin gigantesque dans le .eps/.pdf (fichiers de ~1.7 Go observés).
+    # En la rasterisant, elle est convertie en image bitmap (à la résolution
+    # `dpi` de save_fig) et intégrée dans le fichier vectoriel, qui redevient
+    # léger (texte, axes, légende restent en vectoriel net). zorder fixé
+    # explicitement pour que matplotlib regroupe correctement les couches
+    # rasterisées entre elles.
     ax.plot(
         Omega_sorted, B_sorted,
         color=PLOT_STYLE["color_B"],
         lw=PLOT_STYLE["linewidth"],
         label=r"$B(\Omega)$",
+        rasterized=True,
+        zorder=1,
     )
 
     if stddevs is not None:
@@ -814,6 +824,8 @@ def plot_B_omega(data, folder, name="Fig_B_omega", stddevs=None, data_analytique
             B_sorted + B_stddev,
             color=_OKABE_ITO["sky_blue"],
             alpha=0.25,
+            rasterized=True,
+            zorder=1,
         )
 
     if data_analytique is not None:
